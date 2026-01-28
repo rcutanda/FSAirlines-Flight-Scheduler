@@ -41,7 +41,7 @@ https://www.fsairlines.net/crewcenter/index.php?status=va
 
 **1. The motivation behind FSAirlines Flight Scheduler**
 
-What I have always found most annoying when generating flight plans in FSA, is the calculation of departure and arrival times; especially when many new plans have to be entered in succession. First of all, one has to come up with varied departure times for each leg, which also need to be minimally realistic; most routes are not meant to be flown departing at 4 a.m. Secondly, unless one lives in Europe, calculating reasonable departure UTC times in distant time zones is not a straight forward process because you need to know the time difference between UTC time and the departure airport. There many tools for that, but is both irritating and time-consuming. 
+What I have always found most annoying when generating flight plans in FSA, is the calculation of departure and arrival times; especially when many new plans have to be entered in succession. First of all, one has to come up with varied departure times for each leg, which also need to be minimally realistic; most routes are not meant to be flown departing at 4 a.m. Secondly, unless one lives in Europe, calculating reasonable departure UTC times in distant time zones is not a straight forward process because you need to know the time difference between UTC time and the departure airport. There are many tools for that, but it is both irritating and time-consuming. 
 
 Regarding the arrival time, although tools like SimBrief generate flight plans with precise departure and arrival times,  having to calculate each route individually when introducing large batch of flight plans into FSA is a slow and tedious process that greatly slows everything down. Moreover, the flight plans generated with SimBrief are not a panacea, since winds can significantly alter the duration of the flight, especially on long-haul flights. My experience tells me that even if the duration of a route has been precisely calculated with SimBrief, in future flights it is difficult to meet the estimated flight time with precision.
 
@@ -51,14 +51,14 @@ I can more or less read and modify code, but I am completely unable to write cod
 
 **3. Why FSAirlines Flight Scheduler exists as a Github repo?**
 
-This FSA scheduler has far exceeded all my expectations, allowing me to calculate  departure and arrival times extremely quickly and with simplicity, with an error margin—in my opinion—more than reasonable. That's why I thought that other FSA users may benefit from this tool and decided to share it via this Github repository.
+This FSA scheduler has far exceeded all my expectations, allowing me to calculate  departure and arrival times extremely quickly and with simplicity, with an error margin—in my opinion—more than reasonable. That's why I thought that other FSA airline admins may benefit from this tool, so I decided to share the code via this Github repository.
 
 **4. The logic behind FSAirlines Flight Scheduler**
 
 **4.1**. The scheduler **connects directly to FSAirlines** via your airline's API and airline ID to obtain the coordinates of the requested airport (ICAO code).
 
 > [!NOTE]
-> **ICAO codes used by MSFS and other simulator can be, at times, different from those used by FSA**. Although an airport in FSA may have several ICAO codes listed in its profile, only one can be active. For this reason, when an ICAO code introduced is different from that used in FSA (for example, UTTP or ZSJJ airports in MSFS 2024), the scheduler will not be able to find it via the FSA API. In such cases, an error message will be generated with a link that leads to the airpot's information page in FSA, where it will be possible to quickly see which is ICAO code to use in FSA equivalent to the one requested.
+> **ICAO codes used by MSFS and other simulators can be, at times, different from those used by FSA**. Although an airport in FSA may have several ICAO codes listed in its profile, only one can be active. For this reason, when an ICAO code introduced is different from that used in FSA (for example, UTTP or ZSJJ airports in MSFS 2024), the scheduler will not be able to find it via the FSA API. In such cases, an error message will be generated with a link that leads to the airpot's information page in FSA, where it will be possible to quickly see which is ICAO code in FSA is the equivalent to the one requested.
 > 
 > <img width="572" height="185" alt="ICAO-not-found" src="https://github.com/user-attachments/assets/5a10669d-5fcd-4b9e-afe7-6548f986ddc4" />
 >
@@ -73,17 +73,18 @@ This FSA scheduler has far exceeded all my expectations, allowing me to calculat
 > 
 > **2. Custom values defined by the user are permanent; that's it, the user can set custom defaults.**
 >
-> The user's preferences are stored in the "session" PHP directory of the server (typically, _/var/lib/php/_ sessions for most Linux servers).
+> The user's preferences are stored in the "session" PHP directory of the server (typically, _/var/lib/php/session_ for most Linux servers).
 >
-> **The button "Reset all" restores the default prefences**.
+> **The button "Reset all" restores the default preferences**.
 >
 > <img width="594" height="427" alt="ResetAll" src="https://github.com/user-attachments/assets/50cfc865-ca65-4112-bf69-c143fa28263e" />
 
-4.3.1 **By default, Mach 0.8 is used**, which I have considered to be a typical average speed.
+4.3.1 **By default, Mach 0.8 is used for cruise speed**, which I have considered to be a typical average. During **climbs and descents**, the cruise speed is reduced to **250 knots**.
 
-For convenience, a **list of common commercial aircraft** has been added. The **cruise speeds** for each of the listed aircraft were obtained from **[Eurocontrol](https://learningzone.eurocontrol.int/ilp/customs/ATCPFDB/)**. During **climbs and descents**, the cruise speed is reduced to **250 knots**.
+For convenience, a **list of common commercial aircraft** has been added. The **cruise speeds** for each of the listed aircraft were obtained from **[Eurocontrol](https://learningzone.eurocontrol.int/ilp/customs/ATCPFDB/)**.
 
-<img width="605" height="1069" alt="Aircraft-list" src="https://github.com/user-attachments/assets/39bb6baa-879c-435c-8d4e-51d189a0ab76" />
+<img width="605" height="1069" alt="Aircraft-list" src="https://github.com/user-attachments/assets/39bb6baa-879c-435c-8d4e-51d189a0ab76" />   
+
 
 4.3.2 The **default altitudes are 35,000 feet for jet aircraft, and 24,000 feet for turbo propellers**.
 
@@ -91,24 +92,24 @@ For convenience, a **list of common commercial aircraft** has been added. The **
 
 **4.4 Buffer time**
 
-To make the calculated flight time by the scheduler more realistic, **the script adds a 30-minute buffer** to the originally time calculated to compensate for the time spent taxiing at departure and arrival, deviations due to SID and STARS (especially when the runway in use for departure or arrival is in the opposite direction to the route), and the increase in distance due to the use of airways; since flights are never flown in a straight line as calculated by the script. As with othe values, the user can set a custom value.
+To make the calculated flight time by the scheduler more realistic, **the script adds a 30-minute buffer** to the originally time calculated to compensate for the time spent taxiing at departure and arrival, deviations due to SID and STARS (especially when the runway in use for departure or arrival is in the opposite direction to the route), and the increase in distance due to the use of airways; since flights are never flown in a straight line as calculated by the script. As with other values, users can set their preferences.
 
 **4.5 Use of sunrise as the referece for the departure time calculation**
 
-Coding a reasonable departure time is not as straight forward as it may seem. Let's say I would like to set 07:00 local time as a reference departure time. Even if the coordinates of the departure airport are known, it is essential to know the time zone used in those coordinates, which requires access to a free API. Besides, time zones are quite oftel illogical due to political reasons. That's why I thought that sunrise would be a better choice. Of course, the exact time of sunrise varies throughout the year (and especially in high latitudes), so I took a "one-size-fits-all" approach and, **by default, the reference date is the Spring Equinox (20th March)**. On this date, the sun rises **roughly between 07:15 and 07:45 local time** worldwide. The **calculation of sunrise** is made thanks to the following **free API**:
+Coding a reasonable departure time is not as straight forward as it may seem. Let's say 07:00 local time is the chosen reference departure time. Even if the coordinates of the departure airport are known, it is essential to know the time zone used in those coordinates, which requires access to some kind of database. Besides, time zones are quite often illogical due to unnatural borders and political reasons. That's why I thought that sunrise would be a better choice. Of course, the exact time of sunrise varies throughout the year (and especially in high latitudes), so I took a "one-size-fits-all" approach and, **by default, the reference date is the Spring Equinox (20th March)**. On this date, the sun rises **roughly between 07:15 and 07:45 local time** worldwide. The **calculation of sunrise** is made thanks to the following **free API**:
 
 https://sunrise-sunset.org/api
 
 Once the sunrise time is known (around 07:30 as an average), **a random departure time** —rounded to five-minute increments— **is selected between two hours before sunrise and 15 hours after**. The intention is to have the flight's departure time fall within a "reasonable" time frame.
 
 > [!NOTE]
-> As with other fields, both the reference date and the valid hour range is modifiable by the user.
+> As with other fields, both the reference date and the valid hour range are modifiable by the user.
 
 **4.6 Main limitations of this scheduler**
 
 The calculation of en route time with these parameters is, a priori, less precise than with SimBrief or similar tools because **winds and the increase in distance due to the use of airways are not being taken in**. However, as a trade-off, the calculation is infinitely faster and simpler, and I considered the error margin more than reasonable.
 
-**4.7 Convenience features** . 
+**4.7 Convenience features**
 
 Once the departure time has been calculated, if the generated time is not to your liking, you can use the "**Recalculate Schedule**" button to calculate another random departure time —with the corresponding new arrival time— using the same parameters as before.
 
