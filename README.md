@@ -24,7 +24,7 @@
 > You will find your **Airline ID in the Overview section** of your Airline:  
 https://www.fsairlines.net/crewcenter/index.php?status=va
 >
-><img width="595" height="728" alt="AirlineID" src="https://github.com/user-attachments/assets/04743a42-412a-4e61-b390-68de81cf3cf9" />
+> <img width="510" height="719" alt="AirlineID" src="https://github.com/user-attachments/assets/25ede5bb-74df-401e-bbfd-a7b9d5027790" />
 
 > [!NOTE]
 > You can generate and find your API Key in **_Edit VA Settings → API Key Management_**:  
