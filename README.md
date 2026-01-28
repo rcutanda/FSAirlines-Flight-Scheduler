@@ -14,7 +14,7 @@
 >
 >**2. To update the 4th and 5th lines of the _index.php_ file to define your FSAirlines _API key_ and _Airline ID_**:
 >
-><img width="1237" height="218" alt="DEFINE" src="https://github.com/user-attachments/assets/fbf63741-b62f-4152-bf83-ccbf2710362b" />
+><img width="1192" height="215" alt="AirlineID-APIKey" src="https://github.com/user-attachments/assets/d163d7e6-c0c0-4d7b-85a0-044b227a9840" />
 
 > [!TIP]
 > In Windows, you can edit php files with the default [Notepad](https://apps.microsoft.com/detail/9msmlrh6lzf3?hl=en-GB&gl=ES) or, even better, with [Notepad++](https://notepad-plus-plus.org/).
