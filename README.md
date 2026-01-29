@@ -1,3 +1,7 @@
+> [!TIP]
+> If you would like to provide any kind of **feedback**, please do so in the following **post in the forum**, thanks:  
+> https://forum.fsairlines.net/viewtopic.php?t=10424
+
 > [!NOTE]
 > This script is meant to facilitate the creation of flight plans in [FSAirlines Virtual Airlines Management System](https://www.fsairlines.net/) by automatically providing "reasonable" random departure and arrival times in UTC based on the sunrise time at the departure airport.
 
