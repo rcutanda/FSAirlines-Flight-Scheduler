@@ -103,7 +103,7 @@ The **default altitudes are 35,000 feet for jet aircraft, and 24,000 feet for tu
 
 To make the calculated flight time by the scheduler more realistic, **the script adds a 30-minute buffer** to the originally time calculated to compensate for the time spent taxiing at departure and arrival, deviations due to SID and STARS (especially when the runway in use for departure or arrival is in the opposite direction to the route), and the increase in distance due to the use of airways; since flights are never flown in a straight line as calculated by the script. As with other values, users can set their preferences.
 
-## 5.5 Use of sunrise as the referece for the departure time calculation
+## 5.5 Use of sunrise as the reference for the departure time calculation
 
 Coding a reasonable departure time is not as straight forward as it may seem. Let's say 07:00 local time is the chosen reference departure time. Even if the coordinates of the departure airport are known, it is essential to know the time zone used in those coordinates, which requires access to some kind of database. Besides, time zones are quite often illogical due to unnatural borders and political reasons. That's why I thought that sunrise would be a better choice. Of course, the exact time of sunrise varies throughout the year (and especially in high latitudes), so I took a "one-size-fits-all" approach and, **by default, the reference date is the Spring Equinox (20th March)**. On this date, the sun rises **roughly between 07:15 and 07:45 local time** worldwide. The **calculation of sunrise** is made thanks to the following **free API**:
 
