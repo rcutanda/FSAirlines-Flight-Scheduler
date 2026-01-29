@@ -130,3 +130,7 @@ Finally, once the calculation is performed, **the ICAO codes of origin and desti
 
 > [!TIP]
 > I hope other FSA airline admins will find this script useful. Do feel free to use and modify it as desired. I just ask to be credited. Enjoy!
+
+# 6. Credits
+
+Flags by [Flags Icons](https://github.com/lipis/flag-icons)
