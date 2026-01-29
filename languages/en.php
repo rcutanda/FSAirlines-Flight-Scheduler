@@ -2,7 +2,7 @@
 return [
     // Page
     'page_title' => 'FSAirlines Flight Scheduler',
-    'title' => '✈️ FSAirlines Flight Scheduler',
+    'title' => 'FSAirlines Flight Scheduler',
     'subtitle' => 'Calculate departure and arrival times in UTC for FSAirlines based on the sunrise time at the departure airport',
     
     // Form Labels

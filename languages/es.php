@@ -2,7 +2,7 @@
 return [
     // Page
     'page_title' => 'Calculadora de horarios para FSairlines',
-    'title' => '✈️ Calculadora de horarios para FSairlines',
+    'title' => 'Calculadora de horarios para FSairlines',
     'subtitle' => 'Calcula las horas de salida y llegada en horario UTC para FSAirlines basadas en la hora del amanecer del aeropuerto de salida',
     
     // Form Labels
