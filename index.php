@@ -3,40 +3,88 @@
 define('FSA_API_URL', 'http://www.fsairlines.net/va_interface2.php');
 define('FSA_VA_ID', 'ADD HERE YOUR AIRLINE ID');
 define('FSA_API_KEY', 'ADD HERE YOUR API KEY');
-define('VERSION', 'v1.0.2');
+define('VERSION', 'v1.0.3');
 
 // Start session
 session_start();
 
-// Language selection with browser detection
-$available_languages = ['es', 'en'];
+// Generate or retrieve permanent user ID (survives IP changes and browser closes)
+$user_id_cookie_name = 'fsa_scheduler_user_id';
+$cookie_expiration = time() + (86400 * 365); // 1 year in seconds
+
+if (!isset($_COOKIE[$user_id_cookie_name])) {
+    // Generate unique user ID
+    $user_id = bin2hex(random_bytes(16));
+    setcookie($user_id_cookie_name, $user_id, $cookie_expiration, '/', '', false, true);
+} else {
+    $user_id = $_COOKIE[$user_id_cookie_name];
+}
+
+// Preferences directory (must be before language selection)
+$prefs_dir = __DIR__ . '/user_preferences';
+if (!is_dir($prefs_dir)) {
+    mkdir($prefs_dir, 0755, true);
+}
+
+// Language selection with browser detection (respects priority weights)
+$available_languages = array('es', 'en');
 $current_language = 'en'; // Default fallback
 
-// Check URL parameter first
+// Language preference file
+$lang_pref_file = $prefs_dir . '/' . $user_id . '_lang.txt';
+
+// Check URL parameter first (allows changing language)
 if (isset($_GET['lang'])) {
     if (in_array($_GET['lang'], $available_languages)) {
         $current_language = $_GET['lang'];
-        $_SESSION['language'] = $current_language;
+        file_put_contents($lang_pref_file, $current_language, LOCK_EX);
     }
 }
-// Check session
-elseif (isset($_SESSION['language'])) {
-    if (in_array($_SESSION['language'], $available_languages)) {
-        $current_language = $_SESSION['language'];
+// Load saved language preference from file
+elseif (file_exists($lang_pref_file)) {
+    $saved_lang = trim(file_get_contents($lang_pref_file));
+    if (in_array($saved_lang, $available_languages)) {
+        $current_language = $saved_lang;
     }
 }
-// Detect browser language
+// First visit: parse browser language with priority weights
 else {
+    $detected_language = 'en'; // Fallback
+    
     if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
         $lang_header = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
-        if (preg_match('/^([a-z]{2})/', strtolower($lang_header), $matches)) {
-            $primary_lang = $matches[1];
-            if (in_array($primary_lang, $available_languages)) {
-                $current_language = $primary_lang;
+        $languages = array();
+        
+        // Parse all languages with quality values
+        $lang_parts = explode(',', $lang_header);
+        foreach ($lang_parts as $lang_part) {
+            $lang_part = trim($lang_part);
+            $parts = explode(';', $lang_part);
+            $lang_code = strtolower(substr($parts[0], 0, 2)); // Extract 2-letter code
+            $quality = 1.0; // Default quality
+            
+            if (isset($parts[1])) {
+                if (preg_match('/q=([0-9.]+)/', $parts[1], $matches)) {
+                    $quality = floatval($matches[1]);
+                }
+            }
+            
+            // Only store the FIRST occurrence of each language (highest priority)
+            if (in_array($lang_code, $available_languages) && !isset($languages[$lang_code])) {
+                $languages[$lang_code] = $quality;
             }
         }
+        
+        // Sort by quality (highest first)
+        arsort($languages);
+        
+        if (!empty($languages)) {
+            $detected_language = key($languages); // Get language with highest quality
+        }
     }
-    $_SESSION['language'] = $current_language;
+    
+    $current_language = $detected_language;
+    file_put_contents($lang_pref_file, $current_language, LOCK_EX);
 }
 
 // Verify language file exists
@@ -261,8 +309,34 @@ function addMinutesToTime($time, $minutes) {
     return sprintf('%02d:%02d', $newHours, $newMinutes);
 }
 
+// Preferences file location (user-specific, based on persistent cookie)
+$prefs_dir = __DIR__ . '/user_preferences';
+if (!is_dir($prefs_dir)) {
+    mkdir($prefs_dir, 0755, true);
+}
+$prefs_file = $prefs_dir . '/' . $user_id . '.json';
+
+// Load preferences from file
+function loadPreferences($file) {
+    if (file_exists($file)) {
+        $data = json_decode(file_get_contents($file), true);
+        return is_array($data) ? $data : [];
+    }
+    return [];
+}
+
+// Save preferences to file
+function savePreferences($file, $data) {
+    file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT), LOCK_EX);
+}
+
+$saved_prefs = loadPreferences($prefs_file);
+
 // Handle reset button
 if (isset($_POST['reset'])) {
+    if (file_exists($prefs_file)) {
+        unlink($prefs_file);
+    }
     session_destroy();
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit();
@@ -274,59 +348,64 @@ if (isset($_POST['next_leg'])) {
     $next_leg_dep = $_POST['next_leg_dep'];
 }
 
-// Save preferences to session
+// Save preferences to file
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $prefs_to_save = $saved_prefs;
+    
     if (isset($_POST['aircraft'])) {
-        $_SESSION['aircraft'] = $_POST['aircraft'];
+        $prefs_to_save['aircraft'] = $_POST['aircraft'];
     }
     if (isset($_POST['custom_speed'])) {
-        $_SESSION['custom_speed'] = $_POST['custom_speed'];
+        $prefs_to_save['custom_speed'] = $_POST['custom_speed'];
     }
     if (isset($_POST['custom_speed_type'])) {
-        $_SESSION['custom_speed_type'] = $_POST['custom_speed_type'];
+        $prefs_to_save['custom_speed_type'] = $_POST['custom_speed_type'];
     }
     if (isset($_POST['cruise_altitude'])) {
-        $_SESSION['cruise_altitude'] = $_POST['cruise_altitude'];
+        $prefs_to_save['cruise_altitude'] = $_POST['cruise_altitude'];
     }
     if (isset($_POST['sunrise_date'])) {
-        $_SESSION['sunrise_date'] = $_POST['sunrise_date'];
+        $prefs_to_save['sunrise_date'] = $_POST['sunrise_date'];
     }
     if (isset($_POST['minutes_before_sunrise'])) {
-        $_SESSION['minutes_before_sunrise'] = $_POST['minutes_before_sunrise'];
+        $prefs_to_save['minutes_before_sunrise'] = $_POST['minutes_before_sunrise'];
     }
     if (isset($_POST['hours_after_sunrise'])) {
-        $_SESSION['hours_after_sunrise'] = $_POST['hours_after_sunrise'];
+        $prefs_to_save['hours_after_sunrise'] = $_POST['hours_after_sunrise'];
     }
     if (isset($_POST['buffer_time_vfr'])) {
-        $_SESSION['buffer_time_vfr'] = $_POST['buffer_time_vfr'];
+        $prefs_to_save['buffer_time_vfr'] = $_POST['buffer_time_vfr'];
     }
     if (isset($_POST['buffer_time_ifr'])) {
-        $_SESSION['buffer_time_ifr'] = $_POST['buffer_time_ifr'];
+        $prefs_to_save['buffer_time_ifr'] = $_POST['buffer_time_ifr'];
     }
     if (isset($_POST['climb_rate_vfr'])) {
-        $_SESSION['climb_rate_vfr'] = $_POST['climb_rate_vfr'];
+        $prefs_to_save['climb_rate_vfr'] = $_POST['climb_rate_vfr'];
     }
     if (isset($_POST['climb_rate_ifr'])) {
-        $_SESSION['climb_rate_ifr'] = $_POST['climb_rate_ifr'];
+        $prefs_to_save['climb_rate_ifr'] = $_POST['climb_rate_ifr'];
     }
     if (isset($_POST['climb_speed_knots'])) {
-        $_SESSION['climb_speed_knots'] = $_POST['climb_speed_knots'];
+        $prefs_to_save['climb_speed_knots'] = $_POST['climb_speed_knots'];
     }
+    
+    savePreferences($prefs_file, $prefs_to_save);
+    $saved_prefs = $prefs_to_save;
 }
 
-// Get preferences from session or set defaults
-$aircraft = $_SESSION['aircraft'] ?? 'custom';
-$custom_speed = $_SESSION['custom_speed'] ?? '0.8';
-$custom_speed_type = $_SESSION['custom_speed_type'] ?? 'mach';
-$cruise_altitude = $_SESSION['cruise_altitude'] ?? '35000';
-$sunrise_date = $_SESSION['sunrise_date'] ?? '03/20';
-$minutes_before_sunrise = $_SESSION['minutes_before_sunrise'] ?? '120';
-$hours_after_sunrise = $_SESSION['hours_after_sunrise'] ?? '15';
-$climb_speed_knots = $_SESSION['climb_speed_knots'] ?? '250';
-$buffer_time_vfr = $_SESSION['buffer_time_vfr'] ?? '10';
-$buffer_time_ifr = $_SESSION['buffer_time_ifr'] ?? '30';
-$climb_rate_vfr = $_SESSION['climb_rate_vfr'] ?? '800';
-$climb_rate_ifr = $_SESSION['climb_rate_ifr'] ?? '1800';
+// Get preferences from file or set defaults
+$aircraft = $saved_prefs['aircraft'] ?? 'custom';
+$custom_speed = $saved_prefs['custom_speed'] ?? '0.8';
+$custom_speed_type = $saved_prefs['custom_speed_type'] ?? 'mach';
+$cruise_altitude = $saved_prefs['cruise_altitude'] ?? '35000';
+$sunrise_date = $saved_prefs['sunrise_date'] ?? '03/20';
+$minutes_before_sunrise = $saved_prefs['minutes_before_sunrise'] ?? '90';
+$hours_after_sunrise = $saved_prefs['hours_after_sunrise'] ?? '15';
+$climb_speed_knots = $saved_prefs['climb_speed_knots'] ?? '250';
+$buffer_time_vfr = $saved_prefs['buffer_time_vfr'] ?? '15';
+$buffer_time_ifr = $saved_prefs['buffer_time_ifr'] ?? '30';
+$climb_rate_vfr = $saved_prefs['climb_rate_vfr'] ?? '800';
+$climb_rate_ifr = $saved_prefs['climb_rate_ifr'] ?? '1800';
 
 // Process form submission
 $result = null;
@@ -567,7 +646,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                             value="<?php echo isset($_POST['custom_speed']) ? htmlspecialchars($_POST['custom_speed']) : htmlspecialchars($custom_speed); ?>"
                             onchange="updateClimbSpeedForCustom()"
                         >
-                        <select name="custom_speed_type" id="custom_speed_type" onchange="updateAltitudeForAircraft(); updateClimbSpeedForCustom()">
+                        <select name="custom_speed_type" id="custom_speed_type" onchange="updateAltitudeForAircraft(); updateSpeedTypeSelector()">
                             <option value="mach" <?php echo $custom_speed_type === 'mach' ? 'selected' : ''; ?>>Mach</option>
                             <option value="ktas" <?php echo $custom_speed_type === 'ktas' ? 'selected' : ''; ?>>KTAS</option>
                         </select>
@@ -924,22 +1003,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
         }
         
         function updateClimbSpeedForCustom() {
-            const aircraftSelect = document.getElementById('aircraft');
-            const customSpeedTypeSelect = document.getElementById('custom_speed_type');
-            const customSpeedInput = document.getElementById('custom_speed');
-            const climbSpeedInput = document.getElementById('climb_speed_knots');
-            
-            if (aircraftSelect.value === 'custom') {
-                if (customSpeedTypeSelect.value === 'ktas') {
-                    const customSpeed = parseFloat(customSpeedInput.value);
-                    if (!isNaN(customSpeed) && customSpeed > 0) {
-                        climbSpeedInput.value = Math.round(customSpeed * 0.7);
-                    }
-                } else if (customSpeedTypeSelect.value === 'mach') {
-                    climbSpeedInput.value = 250;
-                }
-            }
-        }
+			const aircraftSelect = document.getElementById('aircraft');
+			const customSpeedTypeSelect = document.getElementById('custom_speed_type');
+			const customSpeedInput = document.getElementById('custom_speed');
+			const climbSpeedInput = document.getElementById('climb_speed_knots');
+			
+			if (aircraftSelect.value === 'custom') {
+				const customSpeed = parseFloat(customSpeedInput.value);
+				if (!isNaN(customSpeed) && customSpeed > 0) {
+					if (customSpeedTypeSelect.value === 'ktas') {
+						climbSpeedInput.value = Math.round(customSpeed * 0.7);
+					}
+				}
+			}
+		}
+
+		function updateSpeedTypeSelector() {
+			const customSpeedTypeSelect = document.getElementById('custom_speed_type');
+			const customSpeedInput = document.getElementById('custom_speed');
+			const climbSpeedInput = document.getElementById('climb_speed_knots');
+			
+			if (customSpeedTypeSelect.value === 'ktas') {
+				customSpeedInput.value = 250;
+				climbSpeedInput.value = 175;
+			} else if (customSpeedTypeSelect.value === 'mach') {
+				customSpeedInput.value = 0.8;
+				climbSpeedInput.value = 250;
+			}
+		}
         
         function copyToClipboard(text, element) {
             const textWithoutColon = text.replace(':', '');
