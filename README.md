@@ -89,7 +89,7 @@ Using the coordinates obtained from FSA, the **direct distance** (great circle r
 
 ### 5.3.1 Default speed
 
-**By default, Mach 0.8 is used for cruise speed**, which I have considered to be a typical average. During **climbs and descents**, the cruise speed is reduced to **250 knots**.
+**By default, Mach 0.8 is used for cruise speed**, which I have considered to be a typical average. During **climbs and descents**, the cruise speed is reduced to **250 knots when the speed is set to Mach and it is reduced to 175 knots when the speed is set to knots.**
 
 For convenience, a **list of common commercial aircraft** has been added. The **cruise speeds** for each of the listed aircraft were obtained from **[Eurocontrol](https://learningzone.eurocontrol.int/ilp/customs/ATCPFDB/)**.
 
@@ -105,15 +105,15 @@ The **default altitudes are 35,000 feet for jet aircraft, and 24,000 feet for tu
 
 ## 5.4 Buffer time
 
-To make the calculated flight time by the scheduler more realistic, when Mach speed are used, **the script adds a 30-minute buffer** to the originally time calculated to compensate for the time spent taxiing at departure and arrival, deviations due to SID and STARS (especially when the runway in use for departure or arrival is in the opposite direction to the route), and the increase in distance due to the use of airways; since flights are never flown in a straight line as calculated by the script. As with other values, users can set their preferences. When the speed is selected in knots, the buffer is reduced to 15 minutes.
+To make the calculated flight time by the scheduler more realistic, when Mach speed are used, **the script adds a 30-minute buffer** to the originally time calculated to compensate for the time spent taxiing at departure and arrival, deviations due to SID and STARS (especially when the runway in use for departure or arrival is in the opposite direction to the route), and the increase in distance due to the use of airways; since flights are never flown in a straight line as calculated by the script. As with other values, users can set their preferences. When the speed is selected in knots, the default buffer is reduced to 15 minutes.
 
 ## 5.5 Use of sunrise as the reference for the departure time calculation
 
-Coding a reasonable departure time is not as straight forward as it may seem. Let's say 07:00 local time is the chosen reference departure time. Even if the coordinates of the departure airport are known, it is essential to know the time zone used in those coordinates, which requires access to some kind of database. Besides, time zones are quite often illogical due to unnatural borders and political reasons. That's why I thought that sunrise would be a better choice. Of course, the exact time of sunrise varies throughout the year (and especially in high latitudes), so I took a "one-size-fits-all" approach and, **by default, the reference date is the Spring Equinox (20th March)**. On this date, the sun rises **roughly between 07:15 and 07:45 local time** worldwide. The **calculation of sunrise** is made thanks to the following **free API**:
+Coding a reasonable departure time is not as straight forward as it may seem. Let's say 07:00 local time is the chosen reference departure time. Even if the coordinates of the departure airport are known, knowing the time zone is not a straightforward process, as quite often they are illogical due to unnatural borders and political reasons. That's why I thought that sunrise would be a better choice. Of course, the exact time of sunrise varies throughout the year (and especially in high latitudes), so I took a "one-size-fits-all" approach and, **by default, the reference date is the Spring Equinox (20th March)**. On this date, the sun rises **roughly between 07:15 and 07:45 local time** worldwide. The **calculation of sunrise** is made thanks to the following **free API**:
 
 https://sunrise-sunset.org/api
 
-Once the sunrise time is known (around 07:30 as an average), **a random departure time** —rounded to five-minute increments— **is selected between 90 minutes before sunrise and 15 hours after**. The intention is to have the flight's departure time fall within a "reasonable" time frame.
+Once the sunrise time at the departure airpot is known (around 07:30 as an average), **a random departure time** —rounded to five-minute increments— **is selected between 90 minutes before sunrise and 15 hours after**. The intention is to have the flight's departure time fall within a "reasonable" time frame.
 
 > [!NOTE]
 > As with other fields, both the reference date and the valid hour range are modifiable by the user.
