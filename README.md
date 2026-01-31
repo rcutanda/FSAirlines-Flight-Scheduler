@@ -14,7 +14,7 @@
 > [!WARNING]
 ># 1. REQUIREMENTS:
 >
->**1. A PHP-enabled web server.** This should not be a problem, as most FSA airlines will host a website. Nevertheless, **the script can also be run locally via [PHP Desktop](https://github.com/cztomczak/phpdesktop)** or using XAMPP, WAMP, MAMP, or a similar PHP stack.
+>**1. A PHP-enabled web server.** This should not be a problem, as most FSA airlines will host a website. Nevertheless, **the script can also be run locally on any computer (no server required) using [PHP Desktop](https://github.com/cztomczak/phpdesktop)**. Just unzip the latest release of FSAirlines Flight Scheduler inside the **_www_ folder of the PHP Desktop package and run its executable**. Of course, it can also be run using XAMPP, WAMP, MAMP, or a similar PHP stack.
 >
 >**2. To update the 4th and 5th lines of the _index.php_ file to define your FSAirlines _API key_ and _Airline ID_**:
 >
