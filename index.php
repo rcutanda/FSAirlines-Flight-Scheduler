@@ -3,7 +3,7 @@
 define('FSA_API_URL', 'http://www.fsairlines.net/va_interface2.php');
 define('FSA_VA_ID', 'ADD HERE YOUR AIRLINE ID');
 define('FSA_API_KEY', 'ADD HERE YOUR API KEY');
-define('VERSION', 'v1.0.3');
+define('VERSION', 'v1.0.4');
 
 // Start session
 session_start();
@@ -868,7 +868,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                         <strong><?php echo $lang['buffer_time']; ?>:</strong> <?php echo $result['buffer_time']; ?> <?php echo $lang['minutes']; ?>
                     </div>
                     <div class="info-line">
-                        <strong><?php echo $lang['total_time']; ?>:</strong> <?php echo number_format($result['flight_time'] + $result['buffer_time'], 0); ?> <?php echo $lang['minutes']; ?> (<?php echo floor(($result['flight_time'] + $result['buffer_time']) / 60); ?>h <?php echo ($result['flight_time'] + $result['buffer_time']) % 60; ?>m)
+						<strong><?php echo $lang['total_time']; ?>:</strong> <?php echo number_format($result['flight_time'] + $result['buffer_time'], 0); ?> <?php echo $lang['minutes']; ?> (<?php echo (int)floor(($result['flight_time'] + $result['buffer_time']) / 60); ?>h <?php echo (int)fmod(($result['flight_time'] + $result['buffer_time']), 60); ?>m)
                     </div>
                 </div>
                 
