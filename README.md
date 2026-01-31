@@ -9,7 +9,7 @@
 <img width="666" height="1182" alt="Screenshot_2" src="https://github.com/user-attachments/assets/03e95ffd-3944-40d6-a991-97a632089447" />
 
 **Advanced options:**  
-<img width="582" height="719" alt="Advanced-options" src="https://github.com/user-attachments/assets/dd6c3d34-6f26-45b9-8672-6c0a59a83ccd" />
+<img width="576" height="662" alt="Advanced_Options" src="https://github.com/user-attachments/assets/aa10ce97-f047-4ddf-ae47-ba7695225f7f" />
 
 > [!WARNING]
 ># 1. REQUIREMENTS:
