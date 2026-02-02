@@ -66,6 +66,9 @@ return [
     'arrival_icao' => 'ICAO DE LLEGADA',
     'departure_time' => 'HORA DE SALIDA',
     'arrival_time' => 'HORA DE LLEGADA',
+    'local_departure_time_reference' => 'Hora local (referencia)',
+    'utc_departure_time_reference' => 'Hora UTC (referencia)',
+    'actual_departure_time_local' => 'Selección aleatoria de hora de salida local',
     
     // Units
     'feet' => 'pies',

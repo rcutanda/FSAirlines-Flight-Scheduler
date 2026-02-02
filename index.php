@@ -590,8 +590,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                     // Round arrival time to 5 minutes
                     $arrival_time = roundToFiveMinutes($arrival_time_raw);
                     
+                    // Convert randomized UTC time back to local time for display
+                    $local_departure_time_randomized = convertLocalTimeToUTC($departure_time, 'UTC');
+                    try {
+                        $tz = new DateTimeZone($tz_info['timezone']);
+                        $dateTime = new DateTime($departure_time, new DateTimeZone('UTC'));
+                        $dateTime->setTimezone($tz);
+                        $local_departure_time_randomized = $dateTime->format('H:i');
+                    } catch (Exception $e) {
+                        $local_departure_time_randomized = $departure_time;
+                    }
+
                     $result = [
 						'timezone_warning' => $timezone_warning ?? false,
+						'dep_icao' => $icao_dep,
 						'dep_icao' => $icao_dep,
 						'dep_name' => $dep_data['name'],
 						'dep_lat' => $dep_data['lat'],
@@ -622,7 +634,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
 						'climb_rate_vfr' => $climb_rate_vfr,
 						'climb_rate_ifr' => $climb_rate_ifr,
 						'custom_speed' => ($aircraft === 'custom') ? $custom_speed : null,
-						'custom_speed_type' => ($aircraft === 'custom') ? $custom_speed_type : null
+						'custom_speed_type' => ($aircraft === 'custom') ? $custom_speed_type : null,
+						'local_departure_time_randomized' => $local_departure_time_randomized
 					];
                 }
             }
@@ -889,10 +902,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                         <strong><?php echo $lang['coordinates']; ?>:</strong> <?php echo number_format($result['dep_lat'], 6); ?>, <?php echo number_format($result['dep_lon'], 6); ?>
                     </div>
                     <div class="info-line">
-                        <strong>Local time:</strong> <?php echo htmlspecialchars($result['local_departure_time']); ?>
+                        <strong><?php echo $lang['local_departure_time_reference']; ?>:</strong> <?php echo htmlspecialchars($result['local_departure_time']); ?>
                     </div>
                     <div class="info-line">
-                        <strong>UTC time:</strong> <?php echo htmlspecialchars($result['utc_departure_time']); ?>
+                        <strong><?php echo $lang['utc_departure_time_reference']; ?>:</strong> <?php echo htmlspecialchars($result['utc_departure_time']); ?>
                     </div>
                     <div class="info-line">
                         <strong><?php echo $lang['departure_range']; ?>:</strong> <?php echo $result['minutes_before_departure']; ?> <?php echo $lang['minutes_before']; ?> <?php echo $lang['to']; ?> <?php echo number_format($result['hours_after_departure'], 1); ?> <?php echo $lang['hours_after']; ?> <?php echo $lang['local_departure_text']; ?>
@@ -974,7 +987,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                     </div>
                 </div>
                 
+                <div style="margin-top: 30px; padding: 20px; background: #f0f8ff; border-left: 4px solid #0066cc; border-radius: 5px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 14px; color: #666; margin-bottom: 8px;"><?php echo $lang['actual_departure_time_local']; ?></div>
+                        <div style="font-size: 32px; font-weight: bold; color: #0066cc; letter-spacing: 2px;"><?php echo htmlspecialchars($result['local_departure_time_randomized']); ?></div>
+                    </div>
+                </div>
+
                 <div class="button-group" style="margin-top: 30px; position: relative; z-index: 100;">
+
                     <form method="POST" action="">
                         <input type="hidden" name="next_leg" value="1">
                         <input type="hidden" name="next_leg_dep" value="<?php echo htmlspecialchars($result['arr_icao']); ?>">

@@ -66,6 +66,9 @@ return [
     'arrival_icao' => 'ARRIVAL ICAO',
     'departure_time' => 'DEPARTURE TIME',
     'arrival_time' => 'ARRIVAL TIME',
+    'local_departure_time_reference' => 'Local time (reference)',
+    'utc_departure_time_reference' => 'UTC time (reference)',
+    'actual_departure_time_local' => 'Randomised local departure time',
     
     // Units
     'feet' => 'feet',
