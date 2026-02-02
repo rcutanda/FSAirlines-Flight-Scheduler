@@ -251,6 +251,27 @@
             grid-template-columns: 1fr 1fr 1fr;
             gap: 15px;
             margin-top: 20px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .button-group form {
+            display: grid;
+            pointer-events: auto;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .button-group form:nth-child(2) {
+            z-index: 20;
+        }
+        
+        .button-group button {
+            pointer-events: auto !important;
+            width: 100%;
+            padding: 14px;
+            position: relative;
+            z-index: 20;
         }
         
         .result-box {
@@ -328,6 +349,9 @@
             border-radius: 5px;
             text-align: center;
             transition: background 0.2s;
+            pointer-events: auto;
+            position: relative;
+            z-index: 5;
         }
         
         .time-value:hover {
@@ -359,6 +383,7 @@
             transform: translateY(-20px);
             transition: opacity 0.3s, transform 0.3s;
             z-index: 1000;
+            pointer-events: none;
         }
         
         .copied-notification.show {
