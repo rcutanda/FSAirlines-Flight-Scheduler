@@ -5,11 +5,12 @@
 > If you would like to provide any kind of **feedback**, please do so in the following **post in the forum**, thanks:  
 > https://forum.fsairlines.net/viewtopic.php?t=10424
 
-<img width="766" height="1279" alt="Screenshot_1" src="https://github.com/user-attachments/assets/6e41cc9d-3791-4c67-ae78-a73f2acf431c" />
-<img width="766" height="1237" alt="Screenshot_2" src="https://github.com/user-attachments/assets/b54749b8-24bc-4d40-96ff-04014c33fb79" />
+<img width="642" height="999" alt="Screenshot_1" src="https://github.com/user-attachments/assets/5041fc01-c84c-4e8c-a49a-9a8e7d1d1011" />
+<img width="642" height="791" alt="Screenshot_2" src="https://github.com/user-attachments/assets/7547bf7c-6717-439e-88ed-04c5365df3ea" />
+<img width="642" height="715" alt="Screenshot_3" src="https://github.com/user-attachments/assets/fe8410ad-1f8e-4197-a914-726cc79e9ca1" />
 
 **Advanced options:**  
-<img width="766" height="534" alt="AdvancedOptions" src="https://github.com/user-attachments/assets/96f7ff4f-17cb-4a0b-aa07-4e3b649da8f1" />
+<img width="642" height="535" alt="AdvancedOptions" src="https://github.com/user-attachments/assets/3895c07b-c63a-4bd2-88a2-0bd95b37692b" />
 
 > [!WARNING]
 ># 1. REQUIREMENTS:
