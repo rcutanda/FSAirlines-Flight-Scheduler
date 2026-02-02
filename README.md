@@ -5,12 +5,13 @@
 > If you would like to provide any kind of **feedback**, please do so in the following **post in the forum**, thanks:  
 > https://forum.fsairlines.net/viewtopic.php?t=10424
 
-<img width="642" height="999" alt="Screenshot_1" src="https://github.com/user-attachments/assets/5041fc01-c84c-4e8c-a49a-9a8e7d1d1011" />
-<img width="642" height="791" alt="Screenshot_2" src="https://github.com/user-attachments/assets/7547bf7c-6717-439e-88ed-04c5365df3ea" />
-<img width="642" height="715" alt="Screenshot_3" src="https://github.com/user-attachments/assets/fe8410ad-1f8e-4197-a914-726cc79e9ca1" />
+<img width="657" height="1015" alt="Screenshot_1" src="https://github.com/user-attachments/assets/4a8694d5-30a3-479b-83c6-3e3e8ea9986d" />
+<img width="657" height="798" alt="Screenshot_2" src="https://github.com/user-attachments/assets/23902e3a-4650-422e-b055-896e349b3e27" />
+<img width="657" height="748" alt="Screenshot_3" src="https://github.com/user-attachments/assets/5715c6a1-820f-4fe3-911f-a2dce96c8753" />
+
 
 **Advanced options:**  
-<img width="642" height="535" alt="AdvancedOptions" src="https://github.com/user-attachments/assets/3895c07b-c63a-4bd2-88a2-0bd95b37692b" />
+<img width="657" height="536" alt="AdvacedOptions" src="https://github.com/user-attachments/assets/975aa04e-e8dc-4ca4-9860-960714082fc9" />
 
 > [!WARNING]
 ># 1. REQUIREMENTS:
