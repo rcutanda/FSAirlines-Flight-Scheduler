@@ -25,7 +25,7 @@
 > In macOS, you can use native [TextEdit](https://support.apple.com/en-gb/guide/textedit/welcome/mac) or the much more powerful [Sublime Text](https://www.sublimetext.com/).
 
 > [!TIP]
-> When PHP Desktop is used, it is recommended to change the default size to 800x1300 in the settings.json file. Just use the same editors from the previous tip.
+> When [PHP Desktop](https://github.com/cztomczak/phpdesktop) is used to run the script in a local enviroment (ie, not uploaded into a web server), it is recommended to change the default size of PHP Desktop to 800x1300 in its settings.json file. Just use the same editors from the previous tip.
 > <img width="907" height="458" alt="PHPDesktopRecommendedSize" src="https://github.com/user-attachments/assets/15395e33-2815-4f5a-a6b8-5e809255fce0" />
 
 > [!NOTE]
