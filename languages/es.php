@@ -3,17 +3,14 @@ return [
     // Page
     'page_title' => 'Calculadora de horarios para FSairlines',
     'title' => 'Calculadora de horarios para FSairlines',
-    'subtitle' => 'Calcula las horas de salida y llegada en horario UTC para FSAirlines basadas en la hora del amanecer del aeropuerto de salida',
+    'subtitle' => 'Calcula horas de salida aleatorias en zona UTC para FSAirlines dentro de un rango personalizada y su correspondiente hora de llegada',
     
     // Form Labels
     'departure_icao' => 'ICAO de Salida',
     'arrival_icao' => 'ICAO de Llegada',
     'aircraft' => 'Aeronave',
     'custom_speed' => 'Velocidad Personalizada',
-    'minutes_before_sunrise' => 'Minutos antes del amanecer',
-    'hours_after_sunrise' => 'Horas después del amanecer',
     'cruise_altitude' => 'Altitud de Crucero',
-    'sunrise_date' => 'Fecha del Amanecer',
     'climb_descent_speed' => 'Velocidad en Ascenso/Descenso',
     'buffer_time_knots' => 'Tiempo de Margen cuando se vuela en nudos',
     'buffer_time_mach' => 'Tiempo de Margen cuando se vuela en Mach',
@@ -29,8 +26,12 @@ return [
     'placeholder_sunrise_date' => 'ej., 03/20',
     
     // Help Texts
+    'local_departure_time' => 'Hora de Salida Local',
+    'minutes_before_departure' => 'Minutos antes de la hora de salida de referencia',
+    'hours_after_departure' => 'Horas después de la hora de salida de referencia',
+    'local_departure_time_help' => 'Esta será la hora de refencia para el margen aleatorio. Se convertirá a UTC para el cálculo del vuelo.',
     'departure_randomized' => 'La salida será aleatoria dentro de este rango',
-    'sunrise_date_format' => 'Formato: mes/día (ej., 03/20 para 20 de marzo)',
+    'local_departure_text' => 'hora de salida local',
     'climb_speed_help' => 'Velocidad fija en nudos durante ascenso y descenso',
     
     // Buttons
@@ -65,6 +66,9 @@ return [
     'arrival_icao' => 'ICAO DE LLEGADA',
     'departure_time' => 'HORA DE SALIDA',
     'arrival_time' => 'HORA DE LLEGADA',
+    'local_departure_time_reference' => 'Hora local (referencia)',
+    'utc_departure_time_reference' => 'Hora UTC (referencia)',
+    'actual_departure_time_local' => 'Selección aleatoria de hora de salida local',
     
     // Units
     'feet' => 'pies',
@@ -76,18 +80,15 @@ return [
     'error' => 'Error',
     'error_cruise_speed' => 'La velocidad de crucero debe ser mayor que 0.',
     'error_cruise_altitude' => 'La altitud de crucero debe ser mayor que 0.',
-    'error_minutes_before' => 'Los minutos antes del amanecer no pueden ser negativos.',
-    'error_hours_after' => 'Las horas después del amanecer deben ser mayores que 0.',
     'error_buffer_time' => 'Los tiempos de margen no pueden ser negativos.',
     'error_climb_rate' => 'Las tasas de ascenso/descenso deben ser mayores que 0.',
     'error_climb_speed' => 'La velocidad de ascenso/descenso debe ser mayor que 0.',
-    'error_sunrise_api' => 'No se pudo obtener la hora del amanecer desde la API.',
+    'error_timezone_api' => 'No se pudo obtener la información de zona horaria de la API.',
+    'error_time_conversion' => 'No se pudo convertir la hora local a UTC.',
 	'error_both_airports' => 'Aeropuerto de salida %s no encontrado en la base de datos. %s<br><br>Aeropuerto de llegada %s no encontrado en la base de datos. %s',
     'error_departure_airport' => 'Aeropuerto de salida %s no encontrado en la base de datos. %s',
     'error_arrival_airport' => 'Aeropuerto de llegada %s no encontrado en la base de datos. %s',
     'find_in_fsa' => 'Localizar el aeropuerto solicitado en FSAirlines',
-
-
     
     // Language selector
     'lang_es' => '🇪🇸 Español',

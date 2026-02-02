@@ -3,17 +3,14 @@ return [
     // Page
     'page_title' => 'FSAirlines Flight Scheduler',
     'title' => 'FSAirlines Flight Scheduler',
-    'subtitle' => 'Calculate departure and arrival times in UTC for FSAirlines based on the sunrise time at the departure airport',
+    'subtitle' => 'Calculate random departure times in UTC for FSAirlines within a specified range, and the corresponding arrival',
     
     // Form Labels
     'departure_icao' => 'Departure ICAO',
     'arrival_icao' => 'Arrival ICAO',
     'aircraft' => 'Aircraft',
     'custom_speed' => 'Custom Speed',
-    'minutes_before_sunrise' => 'Minutes before sunrise',
-    'hours_after_sunrise' => 'Hours after sunrise',
     'cruise_altitude' => 'Cruise Altitude',
-    'sunrise_date' => 'Sunrise Date',
     'climb_descent_speed' => 'Climb/Descent Speed',
     'buffer_time_knots' => 'Buffer Time when flying in knots',
     'buffer_time_mach' => 'Buffer Time when flying in Mach',
@@ -29,8 +26,12 @@ return [
     'placeholder_sunrise_date' => 'e.g., 03/20',
     
     // Help Texts
+    'local_departure_time' => 'Local Departure Time',
+    'minutes_before_departure' => 'Minutes before reference time for departure',
+    'hours_after_departure' => 'Hours after reference time for departure',
+    'local_departure_time_help' => 'Reference time for the randomisation. Will be converted to UTC for flight calculation.',
     'departure_randomized' => 'Departure will be randomised within this range',
-    'sunrise_date_format' => 'Format: month/day (e.g., 03/20 for 20 March)',
+    'local_departure_text' => 'local departure time',
     'climb_speed_help' => 'Fixed speed in knots during climb and descent',
     
     // Buttons
@@ -65,6 +66,9 @@ return [
     'arrival_icao' => 'ARRIVAL ICAO',
     'departure_time' => 'DEPARTURE TIME',
     'arrival_time' => 'ARRIVAL TIME',
+    'local_departure_time_reference' => 'Local time (reference)',
+    'utc_departure_time_reference' => 'UTC time (reference)',
+    'actual_departure_time_local' => 'Randomised local departure time',
     
     // Units
     'feet' => 'feet',
@@ -76,13 +80,12 @@ return [
     'error' => 'Error',
     'error_cruise_speed' => 'Cruise speed must be greater than 0.',
     'error_cruise_altitude' => 'Cruise altitude must be greater than 0.',
-    'error_minutes_before' => 'Minutes before sunrise cannot be negative.',
-    'error_hours_after' => 'Hours after sunrise must be greater than 0.',
     'error_buffer_time' => 'Buffer times cannot be negative.',
     'error_climb_rate' => 'Climb/descent rates must be greater than 0.',
     'error_climb_speed' => 'Climb/descent speed must be greater than 0.',
-    'error_sunrise_api' => 'Unable to retrieve sunrise time from the API.',
-	 'error_both_airports' => 'Departure airport %s not found in the database. %s<br><br>Arrival airport %s not found in the database. %s',
+    'error_timezone_api' => 'Unable to retrieve timezone information from the API.',
+    'error_time_conversion' => 'Unable to convert local time to UTC.',
+	'error_both_airports' => 'Departure airport %s not found in the database. %s<br><br>Arrival airport %s not found in the database. %s',
     'error_departure_airport' => 'Departure airport %s not found in the database. %s',
     'error_arrival_airport' => 'Arrival airport %s not found in the database. %s',
     'find_in_fsa' => 'Find the requested airport in FSAirlines',
