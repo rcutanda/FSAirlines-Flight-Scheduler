@@ -115,7 +115,7 @@ To make the calculated flight time by the scheduler more realistic, when Mach sp
 
 ## 5.5 Use of a local reference time as a base for a random departure time selection
 
-To make the departure time both varied and realistic, the user selects a LOCAL reference departure time (07:00 by default) and a time range before and after that selection. By default, 90 minutes before and 15 hours after. The system will then select a random reparture time within that range and round it up to five minutes. To convert the selected local time into the actual UTC departure time, the free (at least for now) [timeapi.io API](https://www.timeapi.io/) is used.
+To make the departure time both varied and realistic, the user selects a LOCAL reference departure time (07:00 by default) and a time range before and after that selection. By default, 90 minutes before and 15 hours after. The system will then select a random departure time within that range and round it up to five minutes. To convert the selected local time into the actual UTC departure time, the free (at least for now) [timeapi.io API](https://www.timeapi.io/) is used.
 
 > [!NOTE]
 > As with other fields, both the reference time and the valid hour range are modifiable by the user.
