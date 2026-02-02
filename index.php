@@ -3,7 +3,7 @@
 define('FSA_API_URL', 'http://www.fsairlines.net/va_interface2.php');
 define('FSA_VA_ID', 'ADD HERE YOUR AIRLINE ID');
 define('FSA_API_KEY', 'ADD HERE YOUR API KEY');
-define('VERSION', 'v1.0.4');
+define('VERSION', 'v1.1');
 
 // Start session
 session_start();
@@ -243,39 +243,18 @@ function roundToFiveMinutes($time) {
     return sprintf('%02d:%02d', $hours, $roundedMinutes);
 }
 
-// Function to get sunrise time from API
-function getSunriseTime($lat, $lon, $date) {
-    try {
-        $url = "https://api.sunrise-sunset.org/json?lat={$lat}&lng={$lon}&formatted=0&date={$date}";
-        $response = file_get_contents($url);
-        $data = json_decode($response, true);
-        
-        if ($data['status'] == 'OK') {
-            $sunrise_full = $data['results']['sunrise'];
-            preg_match('/T(\d{2}:\d{2}:\d{2})\+/', $sunrise_full, $matches);
-            if (isset($matches[1])) {
-                $time = DateTime::createFromFormat('H:i:s', $matches[1]);
-                return $time->format('H:i');
-            }
-        }
-        return null;
-    } catch (Exception $e) {
-        return null;
-    }
-}
-
 // Function to generate random time with custom range
-function generateRandomTime($sunrise_time, $minutes_before, $hours_after) {
+function generateRandomTime($reference_time, $minutes_before, $hours_after) {
     try {
-        $sunrise = DateTime::createFromFormat('H:i', $sunrise_time);
-        if (!$sunrise) {
+        $reference = DateTime::createFromFormat('H:i', $reference_time);
+        if (!$reference) {
             return null;
         }
         
-        $start = clone $sunrise;
+        $start = clone $reference;
         $start->modify("-{$minutes_before} minutes");
         
-        $end = clone $sunrise;
+        $end = clone $reference;
         $end->modify("+{$hours_after} hours");
         
         $start_timestamp = $start->getTimestamp();
@@ -286,6 +265,78 @@ function generateRandomTime($sunrise_time, $minutes_before, $hours_after) {
         $random_time->setTimestamp($random_timestamp);
         
         return $random_time->format('H:i');
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+// Function to get timezone information using multiple API fallbacks
+function getTimezoneFromCoordinates($lat, $lon) {
+    try {
+        // Try multiple timezone API endpoints for reliability
+        $apis = [
+            // Primary: Open-Meteo (free, no auth required, very reliable)
+            "https://api.open-meteo.com/v1/timezone?latitude={$lat}&longitude={$lon}&format=json",
+            // Secondary: TimeAPI
+            "https://timeapi.io/api/v1/timezone/coordinate?latitude={$lat}&longitude={$lon}"
+        ];
+        
+        foreach ($apis as $url) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'FSAirlines-Flight-Scheduler/1.1');
+            
+            $response = curl_exec($ch);
+            $error = curl_error($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            if ($response !== false && $httpCode === 200) {
+                $data = json_decode($response, true);
+                
+                // Check if it's Open-Meteo response
+                if (isset($data['timezone'])) {
+                    return [
+                        'timezone' => $data['timezone'],
+                        'utcOffset' => $data['utc_offset_seconds'] ?? null
+                    ];
+                }
+                // Check if it's TimeAPI response
+                elseif (isset($data['timezone'])) {
+                    return [
+                        'timezone' => $data['timezone'],
+                        'utcOffset' => $data['utcOffset'] ?? null
+                    ];
+                }
+            }
+        }
+        
+        error_log("Timezone API: All endpoints failed for lat={$lat}, lon={$lon}");
+        return null;
+    } catch (Exception $e) {
+        error_log("Timezone API Exception: " . $e->getMessage());
+        return null;
+    }
+}
+
+// Function to convert local time to UTC time
+function convertLocalTimeToUTC($localTime, $timezone) {
+    try {
+        // Create a DateTime object with today's date in the local timezone
+        $tz = new DateTimeZone($timezone);
+        $dateTime = new DateTime($localTime, $tz);
+        
+        // Convert to UTC
+        $utcTz = new DateTimeZone('UTC');
+        $dateTime->setTimezone($utcTz);
+        
+        return $dateTime->format('H:i');
     } catch (Exception $e) {
         return null;
     }
@@ -348,7 +399,7 @@ if (isset($_POST['next_leg'])) {
     $next_leg_dep = $_POST['next_leg_dep'];
 }
 
-// Save preferences to file
+// SAVE PREFERENCES IMMEDIATELY on POST (before any calculations)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $prefs_to_save = $saved_prefs;
     
@@ -364,14 +415,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['cruise_altitude'])) {
         $prefs_to_save['cruise_altitude'] = $_POST['cruise_altitude'];
     }
-    if (isset($_POST['sunrise_date'])) {
-        $prefs_to_save['sunrise_date'] = $_POST['sunrise_date'];
+    if (isset($_POST['local_departure_time'])) {
+        $prefs_to_save['local_departure_time'] = $_POST['local_departure_time'];
     }
-    if (isset($_POST['minutes_before_sunrise'])) {
-        $prefs_to_save['minutes_before_sunrise'] = $_POST['minutes_before_sunrise'];
+    if (isset($_POST['minutes_before_departure'])) {
+        $prefs_to_save['minutes_before_departure'] = $_POST['minutes_before_departure'];
     }
-    if (isset($_POST['hours_after_sunrise'])) {
-        $prefs_to_save['hours_after_sunrise'] = $_POST['hours_after_sunrise'];
+    if (isset($_POST['hours_after_departure'])) {
+        $prefs_to_save['hours_after_departure'] = $_POST['hours_after_departure'];
     }
     if (isset($_POST['buffer_time_vfr'])) {
         $prefs_to_save['buffer_time_vfr'] = $_POST['buffer_time_vfr'];
@@ -393,14 +444,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $saved_prefs = $prefs_to_save;
 }
 
+// RELOAD preferences from file to ensure we have latest values
+$saved_prefs = loadPreferences($prefs_file);
+
 // Get preferences from file or set defaults
 $aircraft = $saved_prefs['aircraft'] ?? 'custom';
 $custom_speed = $saved_prefs['custom_speed'] ?? '0.8';
 $custom_speed_type = $saved_prefs['custom_speed_type'] ?? 'mach';
 $cruise_altitude = $saved_prefs['cruise_altitude'] ?? '35000';
-$sunrise_date = $saved_prefs['sunrise_date'] ?? '03/20';
-$minutes_before_sunrise = $saved_prefs['minutes_before_sunrise'] ?? '90';
-$hours_after_sunrise = $saved_prefs['hours_after_sunrise'] ?? '15';
+$local_departure_time = $saved_prefs['local_departure_time'] ?? '07:00';
+$minutes_before = $saved_prefs['minutes_before_departure'] ?? '90';
+$hours_after = $saved_prefs['hours_after_departure'] ?? '15';
 $climb_speed_knots = $saved_prefs['climb_speed_knots'] ?? '250';
 $buffer_time_vfr = $saved_prefs['buffer_time_vfr'] ?? '15';
 $buffer_time_ifr = $saved_prefs['buffer_time_ifr'] ?? '30';
@@ -416,14 +470,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
     $icao_arr = strtoupper(trim($_POST['icao_arr']));
     $aircraft = $_POST['aircraft'];
     $cruise_altitude = intval($_POST['cruise_altitude']);
-    $sunrise_date = trim($_POST['sunrise_date']);
-    $minutes_before_sunrise = intval($_POST['minutes_before_sunrise']);
-    $hours_after_sunrise = floatval($_POST['hours_after_sunrise']);
+    $local_departure_time = trim($_POST['local_departure_time']);
+    $minutes_before = intval($_POST['minutes_before_departure']);
+    $hours_after = floatval($_POST['hours_after_departure']);
     $buffer_time_vfr = intval($_POST['buffer_time_vfr']);
     $buffer_time_ifr = intval($_POST['buffer_time_ifr']);
     $climb_rate_vfr = intval($_POST['climb_rate_vfr']);
     $climb_rate_ifr = intval($_POST['climb_rate_ifr']);
     $climb_speed_knots = intval($_POST['climb_speed_knots']);
+    
+    // Save these calculation values to preferences immediately
+    $saved_prefs['local_departure_time'] = $local_departure_time;
+    $saved_prefs['minutes_before_departure'] = $minutes_before;
+    $saved_prefs['hours_after_departure'] = $hours_after;
+    savePreferences($prefs_file, $saved_prefs);
     
     // Determine cruise speed and type
     global $aircraft_list;
@@ -450,10 +510,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
         $error = $lang['error_cruise_speed'];
     } elseif ($cruise_altitude <= 0) {
         $error = $lang['error_cruise_altitude'];
-    } elseif ($minutes_before_sunrise < 0) {
-        $error = $lang['error_minutes_before'];
-    } elseif ($hours_after_sunrise <= 0) {
-        $error = $lang['error_hours_after'];
     } elseif ($buffer_time_vfr < 0 || $buffer_time_ifr < 0) {
         $error = $lang['error_buffer_time'];
     } elseif ($climb_rate_vfr <= 0 || $climb_rate_ifr <= 0) {
@@ -497,13 +553,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                     $flight_type = 'VFR';
                 }
                 
-                // Get sunrise time for departure airport
-                $sunrise_time = getSunriseTime($dep_data['lat'], $dep_data['lon'], $sunrise_date);
+                                // STEP 1: Get timezone information for departure airport
+                $tz_info = getTimezoneFromCoordinates($dep_data['lat'], $dep_data['lon']);
                 
-                if ($sunrise_time) {
-                    // Generate random departure time with custom range
-                    $random_dep_time = generateRandomTime($sunrise_time, $minutes_before_sunrise, $hours_after_sunrise);
-                    
+                // If timezone API fails, assume user entered UTC time directly
+                $timezone_warning = false;
+                if (!$tz_info) {
+                    // FALLBACK: Use UTC timezone (user should enter UTC time)
+                    $tz_info = ['timezone' => 'UTC', 'utcOffset' => '00:00'];
+                    $timezone_warning = true;
+                }
+                
+                // STEP 2: Get user's local departure time from form
+                $user_local_time = trim($_POST['local_departure_time']);
+                
+                // STEP 3: Convert user's LOCAL time to UTC
+                $utc_departure_time = convertLocalTimeToUTC($user_local_time, $tz_info['timezone']);
+                
+                if (!$utc_departure_time) {
+                    $error = $lang['error_time_conversion'];
+                } else {
+                    // STEP 4: Generate random UTC departure time within the range
+                    $random_dep_time = generateRandomTime($utc_departure_time, $minutes_before, $hours_after);
+
                     // Round departure time to 5 minutes
                     $departure_time = roundToFiveMinutes($random_dep_time);
                     
@@ -519,40 +591,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                     $arrival_time = roundToFiveMinutes($arrival_time_raw);
                     
                     $result = [
-                        'dep_icao' => $icao_dep,
-                        'dep_name' => $dep_data['name'],
-                        'dep_lat' => $dep_data['lat'],
-                        'dep_lon' => $dep_data['lon'],
-                        'arr_icao' => $icao_arr,
-                        'arr_name' => $arr_data['name'],
-                        'arr_lat' => $arr_data['lat'],
-                        'arr_lon' => $arr_data['lon'],
-                        'distance' => $distance,
-                        'aircraft' => $aircraft,
-                        'cruise_speed' => $cruise_speed,
-                        'cruise_speed_tas' => $cruise_speed_tas,
-                        'cruise_altitude' => $cruise_altitude,
-                        'speed_type' => $speed_type,
-                        'sunrise_date' => $sunrise_date,
-                        'sunrise' => $sunrise_time,
-                        'minutes_before_sunrise' => $minutes_before_sunrise,
-                        'departure_time' => $departure_time,
-                        'arrival_time' => $arrival_time,
-                        'flight_time' => $flight_time,
-                        'buffer_time' => $buffer_time,
-                        'climb_rate' => $climb_rate,
-                        'climb_speed_knots' => $climb_speed_knots,
-                        'flight_type' => $flight_type,
-                        'hours_after_sunrise' => $hours_after_sunrise,
-                        'buffer_time_vfr' => $buffer_time_vfr,
-                        'buffer_time_ifr' => $buffer_time_ifr,
-                        'climb_rate_vfr' => $climb_rate_vfr,
-                        'climb_rate_ifr' => $climb_rate_ifr,
-                        'custom_speed' => ($aircraft === 'custom') ? $custom_speed : null,
-                        'custom_speed_type' => ($aircraft === 'custom') ? $custom_speed_type : null
-                    ];
-                } else {
-                    $error = $lang['error_sunrise_api'];
+						'timezone_warning' => $timezone_warning ?? false,
+						'dep_icao' => $icao_dep,
+						'dep_name' => $dep_data['name'],
+						'dep_lat' => $dep_data['lat'],
+						'dep_lon' => $dep_data['lon'],
+						'arr_icao' => $icao_arr,
+						'arr_name' => $arr_data['name'],
+						'arr_lat' => $arr_data['lat'],
+						'arr_lon' => $arr_data['lon'],
+						'distance' => $distance,
+						'aircraft' => $aircraft,
+						'cruise_speed' => $cruise_speed,
+						'cruise_speed_tas' => $cruise_speed_tas,
+						'cruise_altitude' => $cruise_altitude,
+						'speed_type' => $speed_type,
+						'local_departure_time' => $local_departure_time,
+						'utc_departure_time' => $utc_departure_time,
+						'minutes_before_departure' => $minutes_before,
+						'hours_after_departure' => $hours_after,
+						'departure_time' => $departure_time,
+						'arrival_time' => $arrival_time,
+						'flight_time' => $flight_time,
+						'buffer_time' => $buffer_time,
+						'climb_rate' => $climb_rate,
+						'climb_speed_knots' => $climb_speed_knots,
+						'flight_type' => $flight_type,
+						'buffer_time_vfr' => $buffer_time_vfr,
+						'buffer_time_ifr' => $buffer_time_ifr,
+						'climb_rate_vfr' => $climb_rate_vfr,
+						'climb_rate_ifr' => $climb_rate_ifr,
+						'custom_speed' => ($aircraft === 'custom') ? $custom_speed : null,
+						'custom_speed_type' => ($aircraft === 'custom') ? $custom_speed_type : null
+					];
                 }
             }
         }
@@ -617,6 +688,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
             </div>
             
             <div class="form-group">
+                <label for="local_departure_time"><?php echo $lang['local_departure_time']; ?> (HH:MM):</label>
+                <input 
+                    type="time" 
+                    id="local_departure_time" 
+                    name="local_departure_time" 
+                    value="<?php echo htmlspecialchars($local_departure_time); ?>"
+                    required
+                    style="font-size: 24px; padding: 15px; height: 60px;"
+                >
+                <div class="help-text"><?php echo $lang['local_departure_time_help']; ?></div>
+            </div>
+            
+            <div class="form-group">
                 <label for="aircraft"><?php echo $lang['aircraft']; ?>:</label>
                 <select name="aircraft" id="aircraft" onchange="toggleCustomSpeed(); updateAltitudeForAircraft()" required>
                     <option value="custom" <?php echo (isset($_POST['aircraft']) && $_POST['aircraft'] === 'custom') || (!isset($_POST['aircraft']) && $aircraft === 'custom') ? 'selected' : ''; ?>><?php echo $lang['custom_speed']; ?></option>
@@ -654,37 +738,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                 </div>
             </div>
             
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="minutes_before_sunrise"><?php echo $lang['minutes_before_sunrise']; ?>:</label>
-                    <input 
-                        type="number" 
-                        id="minutes_before_sunrise" 
-                        name="minutes_before_sunrise" 
-                        min="0"
-                        placeholder="120" 
-                        value="<?php echo htmlspecialchars($minutes_before_sunrise); ?>"
-                        required
-                    >
-                </div>
-                
-                <div class="form-group">
-                    <label for="hours_after_sunrise"><?php echo $lang['hours_after_sunrise']; ?>:</label>
-                    <input 
-                        type="number" 
-                        id="hours_after_sunrise" 
-                        name="hours_after_sunrise" 
-                        step="0.5"
-                        min="0.5"
-                        placeholder="15" 
-                        value="<?php echo htmlspecialchars($hours_after_sunrise); ?>"
-                        required
-                    >
-                </div>
+            <div class="form-group">
+                <label for="minutes_before_departure"><?php echo $lang['minutes_before_departure']; ?>:</label>
+                <input 
+                    type="number" 
+                    id="minutes_before_departure" 
+                    name="minutes_before_departure" 
+                    min="0"
+                    placeholder="90" 
+                    value="<?php echo htmlspecialchars($minutes_before); ?>"
+                    required
+                >
             </div>
+            <div class="form-group">
+                <label for="hours_after_departure"><?php echo $lang['hours_after_departure']; ?>:</label>
+                <input 
+                    type="number" 
+                    id="hours_after_departure" 
+                    name="hours_after_departure" 
+                    step="0.5"
+                    min="0.5"
+                    placeholder="15" 
+                    value="<?php echo htmlspecialchars($hours_after); ?>"
+                    required
+                >
+            </div>
+
             <div class="help-text"><?php echo $lang['departure_randomized']; ?></div>
             
             <div class="advanced-options">
+
                 <div class="advanced-title" onclick="toggleAdvanced()">
                     ⚙️ <?php echo $lang['advanced_options']; ?> <span id="advancedToggle">▼</span>
                 </div>
@@ -701,21 +784,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                             required
                         >
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="sunrise_date"><?php echo $lang['sunrise_date']; ?> (MM/DD):</label>
-                        <input 
-                            type="text" 
-                            id="sunrise_date" 
-                            name="sunrise_date" 
-                            maxlength="5"
-                            placeholder="<?php echo $lang['placeholder_sunrise_date']; ?>" 
-                            value="<?php echo htmlspecialchars($sunrise_date); ?>"
-                            required
-                        >
-                        <div class="help-text"><?php echo $lang['sunrise_date_format']; ?></div>
-                    </div>
-                    
+                                       
                     <div class="form-group">
                         <label for="climb_speed_knots"><?php echo $lang['climb_descent_speed']; ?> (<?php echo $lang['knots']; ?>):</label>
                         <input 
@@ -802,7 +871,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
         
         <?php if ($result): ?>
             <div class="result-box" id="resultsSection">
+                <?php if ($result['timezone_warning']): ?>
+                    <div style="margin-bottom: 20px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px; color: #856404; font-size: 13px;">
+                        <strong>⚠️ <?php echo $lang['note']; ?>:</strong> <?php echo $lang['timezone_api_warning'] ?? 'Timezone detection failed. Times are calculated assuming UTC input.'; ?>
+                    </div>
+                <?php endif; ?>
                 <div class="airport-section">
+
                     <div class="airport-title">✈️ <?php echo $lang['departure']; ?></div>
                     <div class="info-line">
                         <strong><?php echo $lang['icao']; ?>:</strong> <?php echo htmlspecialchars($result['dep_icao']); ?>
@@ -814,10 +889,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                         <strong><?php echo $lang['coordinates']; ?>:</strong> <?php echo number_format($result['dep_lat'], 6); ?>, <?php echo number_format($result['dep_lon'], 6); ?>
                     </div>
                     <div class="info-line">
-                        <strong><?php echo $lang['sunrise']; ?> (<?php echo htmlspecialchars($result['sunrise_date']); ?>):</strong> <?php echo $result['sunrise']; ?> UTC
+                        <strong>Local time:</strong> <?php echo htmlspecialchars($result['local_departure_time']); ?>
                     </div>
                     <div class="info-line">
-                        <strong><?php echo $lang['departure_range']; ?>:</strong> <?php echo $result['minutes_before_sunrise']; ?> <?php echo $lang['minutes_before']; ?> <?php echo $lang['to']; ?> <?php echo number_format($result['hours_after_sunrise'], 1); ?> <?php echo $lang['hours_after']; ?> <?php echo $lang['sunrise_text']; ?>
+                        <strong>UTC time:</strong> <?php echo htmlspecialchars($result['utc_departure_time']); ?>
+                    </div>
+                    <div class="info-line">
+                        <strong><?php echo $lang['departure_range']; ?>:</strong> <?php echo $result['minutes_before_departure']; ?> <?php echo $lang['minutes_before']; ?> <?php echo $lang['to']; ?> <?php echo number_format($result['hours_after_departure'], 1); ?> <?php echo $lang['hours_after']; ?> <?php echo $lang['local_departure_text']; ?>
                     </div>
                 </div>
                 
@@ -896,8 +974,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                     </div>
                 </div>
                 
-                <div class="button-group">
-                    <form method="POST" action="" style="margin: 0;">
+                <div class="button-group" style="margin-top: 30px; position: relative; z-index: 100;">
+                    <form method="POST" action="">
                         <input type="hidden" name="next_leg" value="1">
                         <input type="hidden" name="next_leg_dep" value="<?php echo htmlspecialchars($result['arr_icao']); ?>">
                         <input type="hidden" name="aircraft" value="<?php echo htmlspecialchars($result['aircraft']); ?>">
@@ -906,9 +984,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                             <input type="hidden" name="custom_speed_type" value="<?php echo htmlspecialchars($result['custom_speed_type']); ?>">
                         <?php endif; ?>
                         <input type="hidden" name="cruise_altitude" value="<?php echo htmlspecialchars($result['cruise_altitude']); ?>">
-                        <input type="hidden" name="sunrise_date" value="<?php echo htmlspecialchars($result['sunrise_date']); ?>">
-                        <input type="hidden" name="minutes_before_sunrise" value="<?php echo htmlspecialchars($result['minutes_before_sunrise']); ?>">
-                        <input type="hidden" name="hours_after_sunrise" value="<?php echo htmlspecialchars($result['hours_after_sunrise']); ?>">
+                        <input type="hidden" name="local_departure_time" value="<?php echo htmlspecialchars($result['local_departure_time']); ?>">
+                        <input type="hidden" name="minutes_before_departure" value="<?php echo htmlspecialchars($result['minutes_before_departure']); ?>">
+                        <input type="hidden" name="hours_after_departure" value="<?php echo htmlspecialchars($result['hours_after_departure']); ?>">
                         <input type="hidden" name="buffer_time_vfr" value="<?php echo htmlspecialchars($result['buffer_time_vfr']); ?>">
                         <input type="hidden" name="buffer_time_ifr" value="<?php echo htmlspecialchars($result['buffer_time_ifr']); ?>">
                         <input type="hidden" name="climb_rate_vfr" value="<?php echo htmlspecialchars($result['climb_rate_vfr']); ?>">
@@ -917,7 +995,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                         <button type="submit" class="button-next-leg">✈️ <?php echo $lang['next_leg']; ?></button>
                     </form>
                     
-                    <form method="POST" action="" style="margin: 0;">
+                    <form method="POST" action="">
                         <input type="hidden" name="icao_dep" value="<?php echo htmlspecialchars($result['dep_icao']); ?>">
                         <input type="hidden" name="icao_arr" value="<?php echo htmlspecialchars($result['arr_icao']); ?>">
                         <input type="hidden" name="aircraft" value="<?php echo htmlspecialchars($result['aircraft']); ?>">
@@ -926,18 +1004,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
                             <input type="hidden" name="custom_speed_type" value="<?php echo htmlspecialchars($result['custom_speed_type']); ?>">
                         <?php endif; ?>
                         <input type="hidden" name="cruise_altitude" value="<?php echo htmlspecialchars($result['cruise_altitude']); ?>">
-                        <input type="hidden" name="sunrise_date" value="<?php echo htmlspecialchars($result['sunrise_date']); ?>">
-                        <input type="hidden" name="minutes_before_sunrise" value="<?php echo htmlspecialchars($result['minutes_before_sunrise']); ?>">
-                        <input type="hidden" name="hours_after_sunrise" value="<?php echo htmlspecialchars($result['hours_after_sunrise']); ?>">
+                        <input type="hidden" name="local_departure_time" value="<?php echo htmlspecialchars($result['local_departure_time']); ?>">
+                        <input type="hidden" name="minutes_before_departure" value="<?php echo htmlspecialchars($result['minutes_before_departure']); ?>">
+                        <input type="hidden" name="hours_after_departure" value="<?php echo htmlspecialchars($result['hours_after_departure']); ?>">
                         <input type="hidden" name="buffer_time_vfr" value="<?php echo htmlspecialchars($result['buffer_time_vfr']); ?>">
                         <input type="hidden" name="buffer_time_ifr" value="<?php echo htmlspecialchars($result['buffer_time_ifr']); ?>">
                         <input type="hidden" name="climb_rate_vfr" value="<?php echo htmlspecialchars($result['climb_rate_vfr']); ?>">
                         <input type="hidden" name="climb_rate_ifr" value="<?php echo htmlspecialchars($result['climb_rate_ifr']); ?>">
                         <input type="hidden" name="climb_speed_knots" value="<?php echo htmlspecialchars($result['climb_speed_knots']); ?>">
-                        <button type="submit" class="button-secondary">🔄 <?php echo $lang['recalculate']; ?></button>
+                        <button type="submit" class="button-secondary" style="pointer-events: auto;">🔄 <?php echo $lang['recalculate']; ?></button>
                     </form>
                     
-                    <form method="POST" action="" style="margin: 0;">
+                    <form method="POST" action="">
                         <input type="hidden" name="reset" value="1">
                         <button type="submit" class="button-reset">🔃 <?php echo $lang['reset']; ?></button>
                     </form>
@@ -1063,15 +1141,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['icao_dep']) && !empt
             }, 2500);
         }
         
-        function scrollToResults() {
-            const resultsSection = document.getElementById('resultsSection');
-            if (resultsSection) {
-                resultsSection.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
+        function scrollToVersionInfo() {
+            const versionInfo = document.querySelector('.version-info');
+            if (versionInfo) {
+                versionInfo.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
                 });
             }
         }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleCustomSpeed();
+            updateAltitudeForAircraft();
+            scrollToVersionInfo();
+        });
         
         document.addEventListener('DOMContentLoaded', function() {
             toggleCustomSpeed();
