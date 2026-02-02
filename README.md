@@ -1,15 +1,15 @@
 > [!NOTE]
-> This script is meant to facilitate the creation of flight plans in [FSAirlines Virtual Airlines Management System](https://www.fsairlines.net/) by automatically providing "reasonable" random departure and arrival times in UTC based on the sunrise time at the departure airport.
+> This script is meant to facilitate the creation of flight plans in [FSAirlines Virtual Airlines Management System](https://www.fsairlines.net/) by automatically providing "reasonable" random departure and arrival times in UTC based within a range of a user selected local time at the departure airport.
 
 > [!TIP]
 > If you would like to provide any kind of **feedback**, please do so in the following **post in the forum**, thanks:  
 > https://forum.fsairlines.net/viewtopic.php?t=10424
 
-<img width="666" height="788" alt="Screenshot_1" src="https://github.com/user-attachments/assets/49390d21-ae9e-4077-b8a2-8cc6aea706e7" />
-<img width="666" height="1182" alt="Screenshot_2" src="https://github.com/user-attachments/assets/03e95ffd-3944-40d6-a991-97a632089447" />
+<img width="766" height="1279" alt="Screenshot_1" src="https://github.com/user-attachments/assets/6e41cc9d-3791-4c67-ae78-a73f2acf431c" />
+<img width="766" height="1237" alt="Screenshot_2" src="https://github.com/user-attachments/assets/b54749b8-24bc-4d40-96ff-04014c33fb79" />
 
 **Advanced options:**  
-<img width="576" height="662" alt="Advanced_Options" src="https://github.com/user-attachments/assets/aa10ce97-f047-4ddf-ae47-ba7695225f7f" />
+<img width="766" height="534" alt="AdvancedOptions" src="https://github.com/user-attachments/assets/96f7ff4f-17cb-4a0b-aa07-4e3b649da8f1" />
 
 > [!WARNING]
 ># 1. REQUIREMENTS:
@@ -23,6 +23,10 @@
 > [!TIP]
 > In Windows, you can edit php files with the default [Notepad](https://apps.microsoft.com/detail/9msmlrh6lzf3?hl=en-GB&gl=ES) or, even better, with [Notepad++](https://notepad-plus-plus.org/).
 > In macOS, you can use native [TextEdit](https://support.apple.com/en-gb/guide/textedit/welcome/mac) or the much more powerful [Sublime Text](https://www.sublimetext.com/).
+
+> [!TIP]
+> When PHP Desktop is used, it is recommended to change the default size to 800x1300 in the settings.json file. Just use the same editors from the previous tip.
+> <img width="907" height="458" alt="PHPDesktopRecommendedSize" src="https://github.com/user-attachments/assets/15395e33-2815-4f5a-a6b8-5e809255fce0" />
 
 > [!NOTE]
 > You will find your **Airline ID in the Overview section** of your Airline:  
@@ -107,16 +111,12 @@ The **default altitudes are 35,000 feet for jet aircraft, and 24,000 feet for tu
 
 To make the calculated flight time by the scheduler more realistic, when Mach speed are used, **the script adds a 30-minute buffer** to the originally time calculated to compensate for the time spent taxiing at departure and arrival, deviations due to SID and STARS (especially when the runway in use for departure or arrival is in the opposite direction to the route), and the increase in distance due to the use of airways; since flights are never flown in a straight line as calculated by the script. As with other values, users can set their preferences. When the speed is selected in knots, the default buffer is reduced to 15 minutes.
 
-## 5.5 Use of sunrise as the reference for the departure time calculation
+## 5.5 Use of a local reference time as a base for a random departure time selection
 
-Coding a reasonable departure time is not as straight forward as it may seem. Let's say 07:00 local time is the chosen reference departure time. Even if the coordinates of the departure airport are known, knowing the time zone is not a straightforward process, as quite often they are illogical due to unnatural borders and political reasons. That's why I thought that sunrise would be a better choice. Of course, the exact time of sunrise varies throughout the year (and especially in high latitudes), so I took a "one-size-fits-all" approach and, **by default, the reference date is the Spring Equinox (20th March)**. On this date, the sun rises **roughly between 07:15 and 07:45 local time** worldwide. The **calculation of sunrise** is made thanks to the following **free API**:
-
-https://sunrise-sunset.org/api
-
-Once the sunrise time at the departure airpot is known (around 07:30 as an average), **a random departure time** —rounded to five-minute increments— **is selected between 90 minutes before sunrise and 15 hours after**. The intention is to have the flight's departure time fall within a "reasonable" time frame.
+To make the departure time both varied and realistic, the user selects a LOCAL reference departure time (07:00 by default) and a time range before and after the selected time. By default, 90 minutes before and 15 hours after. The system will then select a random reparture time within that range and round it up to five minutes. To convert the selected local time into the actual UTC departure time, the free (at least for now) timeapi.io API is called.
 
 > [!NOTE]
-> As with other fields, both the reference date and the valid hour range are modifiable by the user.
+> As with other fields, both the reference time and the valid hour range are modifiable by the user.
 
 ## 5.6 Main limitations of this scheduler
 
