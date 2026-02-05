@@ -1,3 +1,8 @@
+> [!CAUTION]
+> ***
+> **This README is STILL NOT UPDATED to include the new functions under testing for v1.2**
+> ***
+
 > [!NOTE]
 > This script is meant to facilitate the creation of flight plans in [FSAirlines Virtual Airlines Management System](https://www.fsairlines.net/) by automatically providing "reasonable" random departure and arrival times in UTC within a range of a user selected local time at the departure airport.
 

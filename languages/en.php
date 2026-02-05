@@ -23,13 +23,19 @@ return [
     'placeholder_arrival' => 'e.g., KJFK',
     'placeholder_custom_speed' => 'e.g., 0.8 or 450',
     'placeholder_cruise_altitude' => 'e.g., 35000',
-    'placeholder_sunrise_date' => 'e.g., 03/20',
     
     // Help Texts
     'local_departure_time' => 'Local Departure Time',
     'minutes_before_departure' => 'Minutes before reference time for departure',
+    'minutes_after_departure' => 'Minutes after reference time for departure',
     'hours_after_departure' => 'Hours after reference time for departure',
+    'minutes_after' => 'minutes after',
     'local_departure_time_help' => 'Reference time for the randomisation. Will be converted to UTC for flight calculation.',
+    'flight_mode' => 'Flight Mode',
+    'charter_flight' => 'Charter flight',
+    'daily_schedule' => 'Daily schedule',
+    'latest_arrival_time' => 'Latest local arrival time allowed',
+    'turnaround_time' => 'Turnaround time',
     'departure_randomized' => 'Departure will be randomised within this range',
     'local_departure_text' => 'local departure time',
     'climb_speed_help' => 'Fixed speed in knots during climb and descent',
@@ -47,12 +53,10 @@ return [
     'icao' => 'ICAO',
     'name' => 'Name',
     'coordinates' => 'Coordinates',
-    'sunrise' => 'Sunrise',
     'departure_range' => 'Departure Range',
     'minutes_before' => 'mins before',
     'to' => 'to',
     'hours_after' => 'hours after',
-    'sunrise_text' => 'sunrise',
     'custom' => 'Custom',
     'distance' => 'Distance',
     'cruise_speed' => 'Cruise Speed',
@@ -68,8 +72,8 @@ return [
     'arrival_time' => 'ARRIVAL TIME',
     'local_departure_time_reference' => 'Local time (reference)',
     'utc_departure_time_reference' => 'UTC time (reference)',
-    'actual_departure_time_local' => 'Randomised local departure time',
-    
+    'actual_departure_time_local' => 'Local departure time',
+
     // Units
     'feet' => 'feet',
     'knots' => 'knots',
@@ -83,14 +87,15 @@ return [
     'error_buffer_time' => 'Buffer times cannot be negative.',
     'error_climb_rate' => 'Climb/descent rates must be greater than 0.',
     'error_climb_speed' => 'Climb/descent speed must be greater than 0.',
-    'error_timezone_api' => 'Unable to retrieve timezone information from the API.',
     'error_time_conversion' => 'Unable to convert local time to UTC.',
+    'new_day_warning' => 'The arrival time exceeds the latest local arrival time allowed. The next flight will use a new daily schedule.',
+    'new_day_text' => 'Next day cycle starting. New randomisation will be applied.',
 	'error_both_airports' => 'Departure airport %s not found in the database. %s<br><br>Arrival airport %s not found in the database. %s',
     'error_departure_airport' => 'Departure airport %s not found in the database. %s',
     'error_arrival_airport' => 'Arrival airport %s not found in the database. %s',
     'find_in_fsa' => 'Find the requested airport in FSAirlines',
-
-
+	'timezone_api_warning_title' => 'Connection Problem with Timezone Server',
+	'timezone_api_warning_message' => 'There was a connection problem with the server in charge of making the timezone conversion. Please, use the "Recalculate Schedule" button to try again.',
     
     // Language selector
     'lang_es' => '🇪🇸 Español',

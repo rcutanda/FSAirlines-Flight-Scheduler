@@ -1,0 +1,28 @@
+<?php
+$aircraft_list = [
+    'Airbus A220/A310/A318/A319/A320/A321' => ['speed' => 0.79, 'type' => 'mach', 'altitude' => 35000],
+    'Airbus A330/A340' => ['speed' => 0.82, 'type' => 'mach', 'altitude' => 35000],
+    'Airbus A350/A380' => ['speed' => 0.85, 'type' => 'mach', 'altitude' => 35000],
+    'ATR 42' => ['speed' => 260, 'type' => 'knots', 'altitude' => 24000],
+    'ATR 72' => ['speed' => 275, 'type' => 'knots', 'altitude' => 24000],
+    'Avro RJ-70/85/100' => ['speed' => 0.68, 'type' => 'mach', 'altitude' => 35000],
+    'Boeing 717' => ['speed' => 0.76, 'type' => 'mach', 'altitude' => 35000],
+    'Boeing 727' => ['speed' => 0.80, 'type' => 'mach', 'altitude' => 35000],
+    'Boeing 737-800' => ['speed' => 0.79, 'type' => 'mach', 'altitude' => 35000],
+    'Boeing 747-100/200' => ['speed' => 0.83, 'type' => 'mach', 'altitude' => 35000],
+    'Boeing 747-300/400/800' => ['speed' => 0.85, 'type' => 'mach', 'altitude' => 35000],
+    'Boeing 757/767' => ['speed' => 0.80, 'type' => 'mach', 'altitude' => 35000],
+    'Boeing 777' => ['speed' => 0.84, 'type' => 'mach', 'altitude' => 35000],
+    'Boeing 787' => ['speed' => 0.86, 'type' => 'mach', 'altitude' => 35000],
+    'Bombardier CRJ-100/200' => ['speed' => 0.75, 'type' => 'mach', 'altitude' => 35000],
+    'Bombardier CRJ-700/705/1000' => ['speed' => 0.78, 'type' => 'mach', 'altitude' => 35000],
+    'British Aerospace 146-100/200/300' => ['speed' => 0.65, 'type' => 'mach', 'altitude' => 35000],
+    'De Havilland Canada Dash 7' => ['speed' => 220, 'type' => 'knots', 'altitude' => 24000],
+    'De Havilland Canada Dash 8 100/Q300' => ['speed' => 250, 'type' => 'knots', 'altitude' => 24000],
+    'De Havilland Canada Dash 8 Q400' => ['speed' => 360, 'type' => 'knots', 'altitude' => 24000],
+    'Embraer E135/E145/E170/E175/E190/E195' => ['speed' => 0.78, 'type' => 'mach', 'altitude' => 35000],
+    'Fokker 70/100' => ['speed' => 0.70, 'type' => 'mach', 'altitude' => 35000],
+    'McDonnell Douglas DC-9' => ['speed' => 0.74, 'type' => 'mach', 'altitude' => 35000],
+    'McDonnell Douglas MD-11' => ['speed' => 0.83, 'type' => 'mach', 'altitude' => 35000],
+    'McDonnell Douglas MD-81/82/83/87/88' => ['speed' => 0.76, 'type' => 'mach', 'altitude' => 35000]
+];
