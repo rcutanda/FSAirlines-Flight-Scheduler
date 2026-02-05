@@ -8,7 +8,7 @@
                 name="icao_dep" 
                 maxlength="4" 
                 placeholder="<?php echo $lang['placeholder_departure']; ?>" 
-                value="<?php echo $next_leg_dep ? htmlspecialchars($next_leg_dep) : (isset($_POST['icao_dep']) ? htmlspecialchars($_POST['icao_dep']) : ''); ?>"
+                value="<?php echo htmlspecialchars($icao_dep); ?>"
                 required 
                 <?php echo $next_leg_dep ? '' : 'autofocus'; ?>
             >
@@ -29,21 +29,24 @@
         </div>
     </div>
     
-    <div class="flight-mode-row">
+    <div class="form-row">
         <div class="form-group">
             <label for="local_departure_time"><?php echo $lang['local_departure_time']; ?><br>(HH:MM):</label>
-            <input 
-                type="time" 
-                id="local_departure_time" 
-                name="local_departure_time" 
-                value="<?php echo htmlspecialchars($calculated_next_departure); ?>" 
-                required
-                style="font-size: 32px; padding: 2px; height: 42px; width: auto;"
-            >
+            <div>
+                <input 
+                    type="time" 
+                    id="local_departure_time" 
+                    name="local_departure_time" 
+                    value="<?php echo htmlspecialchars($local_departure_time); ?>"
+                    style="font-size: 16px; padding: 15px; height: 60px; width: 100%; box-sizing: border-box;"
+                >
+                <button type="button" style="margin-top: 8px; padding: 8px 12px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="saveDeparturDefault()">💾 <?php echo $lang['save_default'] ?? 'Save default'; ?></button>
+            </div>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
+        
+        <div class="form-group">
             <label for="flight_mode"><?php echo $lang['flight_mode']; ?>:</label>
-            <select name="flight_mode" id="flight_mode" required style="font-size: 16px; padding: 15px; height: 60px;" onchange="toggleLatestArrivalTime()">
+            <select name="flight_mode" id="flight_mode" required style="font-size: 16px; padding: 15px; height: 60px; width: 100%;" onchange="toggleLatestArrivalTime()">
                 <option value="charter" <?php echo (!isset($_POST['flight_mode']) || $_POST['flight_mode'] === 'charter') ? 'selected' : ''; ?>>
                     <?php echo $lang['charter_flight']; ?>
                 </option>
@@ -52,17 +55,22 @@
                 </option>
             </select>
         </div>
-        <div class="latest-arrival-inline" id="latestArrivalInline" style="display: none;">
+        
+        <div class="form-group" id="latestArrivalInline" style="display: none;">
             <label for="latest_arrival_time"><?php echo $lang['latest_arrival_time']; ?><br>(HH:MM):</label>
-            <input 
-                type="time" 
-                id="latest_arrival_time" 
-                name="latest_arrival_time" 
-                value="<?php echo htmlspecialchars($latest_arrival_time); ?>"
-                style="font-size: 32px; padding: 2px; height: 42px; width: auto;"
-            >
+            <div>
+                <input 
+                    type="time" 
+                    id="latest_arrival_time" 
+                    name="latest_arrival_time" 
+                    value="<?php echo htmlspecialchars($latest_arrival_time); ?>"
+                    style="font-size: 16px; padding: 15px; height: 60px; width: 100%; box-sizing: border-box;"
+                >
+                <button type="button" style="margin-top: 8px; padding: 8px 12px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="saveArrivalDefault()">💾 <?php echo $lang['save_default'] ?? 'Save default'; ?></button>
+            </div>
         </div>
     </div>
+    
     <div class="help-text"><?php echo $lang['local_departure_time_help']; ?></div>
     
     <div class="form-group">

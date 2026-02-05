@@ -135,6 +135,69 @@
             </div>
         </div>
 
+        <?php 
+        // Calculate if next departure (arrival + turnaround) is OUTSIDE the allowed range
+        $show_schedule_new_day = false;
+        if ($flight_mode === 'daily_schedule' && !$result['new_day_triggered']) {
+            try {
+                // Get arrival time in minutes
+                $arrival_parts = explode(':', $result['local_arrival_time']);
+                $arrival_mins = intval($arrival_parts[0]) * 60 + intval($arrival_parts[1]);
+                
+                // Get turnaround time
+                $turnaround_mins = isset($_POST['turnaround_time_input']) ? intval($_POST['turnaround_time_input']) : (($result['speed_type'] === 'mach') ? intval($turnaround_time_mach) : intval($turnaround_time_knots));
+                
+                // Calculate next departure time
+                $next_departure_mins = $arrival_mins + $turnaround_mins;
+                
+                // Handle day wraparound
+                if ($next_departure_mins >= 1440) {
+                    $next_departure_mins -= 1440;
+                }
+                
+                // Get user's defined range
+                $local_dep_parts = explode(':', $local_departure_time);
+                $local_dep_mins = intval($local_dep_parts[0]) * 60 + intval($local_dep_parts[1]);
+                
+                $latest_parts = explode(':', $latest_arrival_time);
+                $latest_mins = intval($latest_parts[0]) * 60 + intval($latest_parts[1]);
+                
+                // Check if next departure is OUTSIDE the allowed range
+                // Allowed range: from local_departure_time to latest_arrival_time
+                $is_within_range = false;
+                if ($local_dep_mins <= $latest_mins) {
+                    // Normal range (e.g., 07:00 to 23:55)
+                    $is_within_range = ($next_departure_mins >= $local_dep_mins && $next_departure_mins <= $latest_mins);
+                } else {
+                    // Wraparound range (e.g., 23:00 to 06:00)
+                    $is_within_range = ($next_departure_mins >= $local_dep_mins || $next_departure_mins <= $latest_mins);
+                }
+                
+                // Show warning if OUTSIDE range
+                if (!$is_within_range) {
+                    $show_schedule_new_day = true;
+                }
+            } catch (Exception $e) {
+                // If calculation fails, don't show the box
+            }
+        }
+        ?>
+
+        <?php if ($show_schedule_new_day): ?>
+        <div style="margin-top: 30px; margin-bottom: 20px; padding: 20px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+                <div style="font-size: 14px; color: #856404; margin-bottom: 10px;">
+                    <strong>⚠️ <?php echo $lang['note']; ?>:</strong> <?php echo sprintf($lang['new_day_exceeds_latest_arrival'], htmlspecialchars($latest_arrival_time)); ?>
+                </div>
+            </div>
+            <form method="POST" action="" style="margin: 0; flex-shrink: 0; margin-left: 20px;">
+                <input type="hidden" name="schedule_new_day" value="1">
+                <input type="hidden" name="icao_arr" value="<?php echo htmlspecialchars($result['arr_icao']); ?>">
+                <button type="submit" class="button-secondary" style="margin: 0; width: auto; padding: 12px 20px; white-space: nowrap;">📅 <?php echo $lang['schedule_new_day']; ?></button>
+            </form>
+        </div>
+        <?php endif; ?>
+
         <?php if (($flight_mode === 'daily_schedule' || $is_next_leg) && !$result['new_day_triggered']): ?>
         <div class="turnaround-time-section show" id="turnaroundTimeSection">
             <div class="turnaround-time-form">
@@ -160,6 +223,20 @@
         </div>
         <?php endif; ?>
 
+        <?php if ($result['show_new_day_box'] && !$show_schedule_new_day): ?>
+        <div style="margin-top: 30px; margin-bottom: 20px; padding: 20px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+                <div style="font-size: 14px; color: #856404; margin-bottom: 10px;">
+                    <strong>⚠️ <?php echo $lang['note']; ?>:</strong> <?php echo $lang['new_day_exceeds_latest_arrival']; ?>
+                </div>
+            </div>
+            <form method="POST" action="" style="margin: 0; flex-shrink: 0; margin-left: 20px;">
+                <input type="hidden" name="schedule_new_day" value="1">
+                <button type="submit" class="button-secondary" style="margin: 0; width: auto; padding: 12px 20px; white-space: nowrap;">📅 <?php echo $lang['schedule_new_day']; ?></button>
+            </form>
+        </div>
+        <?php endif; ?>
+
         <div class="button-group" style="margin-top: 30px; position: relative; z-index: 100;">
             <?php if ($flight_mode === 'daily_schedule' && $result['new_day_triggered']): ?>
             <!-- New day triggered: reset to first-day logic -->
@@ -173,7 +250,7 @@
                     <input type="hidden" name="custom_speed_type" value="<?php echo htmlspecialchars($result['custom_speed_type']); ?>">
                 <?php endif; ?>
                 <input type="hidden" name="cruise_altitude" value="<?php echo htmlspecialchars($result['cruise_altitude']); ?>">
-                <input type="hidden" name="local_departure_time" value="<?php echo htmlspecialchars($saved_prefs['local_departure_time']); ?>">
+                <input type="hidden" name="local_departure_time" value="07:00">
                 <input type="hidden" name="minutes_before_departure" value="<?php echo htmlspecialchars($result['minutes_before_departure']); ?>">
                 <input type="hidden" name="hours_after_departure" value="<?php echo htmlspecialchars($result['hours_after_departure']); ?>">
                 <input type="hidden" name="minutes_after_departure" value="<?php echo (isset($_POST['minutes_after_departure'])) ? htmlspecialchars($_POST['minutes_after_departure']) : '30'; ?>">
@@ -183,7 +260,7 @@
                 <input type="hidden" name="buffer_time_ifr" value="<?php echo htmlspecialchars($result['buffer_time_ifr']); ?>">
                 <input type="hidden" name="climb_rate_vfr" value="<?php echo htmlspecialchars($result['climb_rate_vfr']); ?>">
                 <input type="hidden" name="climb_rate_ifr" value="<?php echo htmlspecialchars($result['climb_rate_ifr']); ?>">
-                <input type="hidden" name="climb_speed_knots" value="<?php echo htmlspecialchars($result['climb_speed_knots']); ?>">
+                <input type="hidden" name="climb_speed_knots" value="<?php echo htmlspecialchars($result['climb_speed_knots']); ?>"/>
                 <button type="submit" class="button-next-leg">✈️ <?php echo $lang['next_leg']; ?></button>
             </form>
             <?php else: ?>
@@ -201,7 +278,7 @@
                 <input type="hidden" name="minutes_before_departure" value="<?php echo htmlspecialchars($result['minutes_before_departure']); ?>">
                 <input type="hidden" name="hours_after_departure" value="<?php echo htmlspecialchars($result['hours_after_departure']); ?>">
                 <input type="hidden" name="minutes_after_departure" value="<?php echo (isset($_POST['minutes_after_departure'])) ? htmlspecialchars($_POST['minutes_after_departure']) : '30'; ?>">
-                <input type="hidden" name="flight_mode" value="<?php echo htmlspecialchars($result['flight_mode']); ?>">
+                <input type="hidden" name="flight_mode" value="<?php echo htmlspecialchars($flight_mode); ?>">
                 <input type="hidden" name="latest_arrival_time" value="<?php echo htmlspecialchars($latest_arrival_time); ?>">
                 <input type="hidden" name="next_leg_turnaround_time" value="<?php echo (isset($_POST['turnaround_time_input'])) ? htmlspecialchars($_POST['turnaround_time_input']) : (($result['speed_type'] === 'mach') ? $turnaround_time_mach : $turnaround_time_knots); ?>">
                 <input type="hidden" name="next_leg_departure_time" value="<?php echo htmlspecialchars($result['arrival_time']); ?>">
@@ -209,7 +286,7 @@
                 <input type="hidden" name="buffer_time_ifr" value="<?php echo htmlspecialchars($result['buffer_time_ifr']); ?>">
                 <input type="hidden" name="climb_rate_vfr" value="<?php echo htmlspecialchars($result['climb_rate_vfr']); ?>">
                 <input type="hidden" name="climb_rate_ifr" value="<?php echo htmlspecialchars($result['climb_rate_ifr']); ?>">
-                <input type="hidden" name="climb_speed_knots" value="<?php echo htmlspecialchars($result['climb_speed_knots']); ?>">
+                <input type="hidden" name="climb_speed_knots" value="<?php echo htmlspecialchars($result['climb_speed_knots']); ?>"/>
                 <button type="submit" class="button-next-leg">✈️ <?php echo $lang['next_leg']; ?></button>
             </form>
             <?php endif; ?>
@@ -233,7 +310,7 @@
                 <input type="hidden" name="buffer_time_ifr" value="<?php echo htmlspecialchars($result['buffer_time_ifr']); ?>">
                 <input type="hidden" name="climb_rate_vfr" value="<?php echo htmlspecialchars($result['climb_rate_vfr']); ?>">
                 <input type="hidden" name="climb_rate_ifr" value="<?php echo htmlspecialchars($result['climb_rate_ifr']); ?>">
-                <input type="hidden" name="climb_speed_knots" value="<?php echo htmlspecialchars($result['climb_speed_knots']); ?>">
+                <input type="hidden" name="climb_speed_knots" value="<?php echo htmlspecialchars($result['climb_speed_knots']); ?>"/>
                 <button type="submit" class="button-secondary" style="pointer-events: auto;">🔄 <?php echo $lang['recalculate']; ?></button>
             </form>
             

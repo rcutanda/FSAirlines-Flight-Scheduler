@@ -154,6 +154,9 @@
             toggleCustomSpeed();
             updateAltitudeForAircraft();
             toggleLatestArrivalTime();
+            if (document.getElementById('resultsSection')) {
+                document.querySelector('.version-info').scrollIntoView({ behavior: 'smooth' });
+            }
         });
     </script>
 

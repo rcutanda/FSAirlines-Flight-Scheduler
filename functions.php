@@ -1,37 +1,61 @@
 <?php
 // Function to get airport coordinates and name from FSAirlines API
 function getAirportData($icao) {
+    error_log("FSA API: Called for ICAO [" . $icao . "]");
     try {
-        $url = FSA_API_URL . '?function=getAirportData&va_id=' . FSA_VA_ID . '&icao=' . urlencode($icao) . '&apikey=' . FSA_API_KEY;
-        $response = file_get_contents($url);
-        
+        $url = 'https://www.fsairlines.net/va_interface2.php?function=getAirportData&va_id=' . FSA_VA_ID . '&icao=' . urlencode($icao) . '&apikey=' . FSA_API_KEY;
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'FSAirlines-Flight-Scheduler/1.1');
+        $response = curl_exec($ch);
+        $error = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($error) {
+            error_log("FSA API CURL Error: " . $error . " for ICAO: " . $icao . " URL: " . substr($url, 0, 100));
+            return ['status' => 'connection_error', 'data' => null];
+        }
+
+        if ($httpCode !== 200) {
+            error_log("FSA API HTTP Error: " . $httpCode . " for ICAO: " . $icao . " URL: " . substr($url, 0, 100));
+            return ['status' => 'connection_error', 'data' => null];
+        }
+
         if ($response === false) {
-            return null;
+            error_log("FSA API No response for ICAO: " . $icao);
+            return ['status' => 'connection_error', 'data' => null];
         }
-        
+
         $xml = simplexml_load_string($response);
-        
         if ($xml === false) {
-            return null;
+            error_log("FSA API Failed to parse XML for ICAO: " . $icao . " Response: " . substr($response, 0, 200));
+            return ['status' => 'connection_error', 'data' => null];
         }
-        
+
         if ((string)$xml['success'] !== 'SUCCESS') {
-            return null;
+            error_log("FSA API not SUCCESS: " . (string)$xml['success'] . " for ICAO: " . $icao . " Data length: " . strlen($response));
+            return ['status' => 'not_found', 'data' => null];
         }
-        
+
         $data = $xml->data;
-        
-        if (isset($data['lat']) && isset($data['lon']) && isset($data['name'])) {
-            return [
-                'lat' => floatval($data['lat']),
-                'lon' => floatval($data['lon']),
-                'name' => (string)$data['name']
-            ];
+        $attrs = $data->attributes();
+        if (isset($attrs['lat']) && isset($attrs['lon']) && isset($attrs['name'])) {
+            return ['status' => 'success', 'data' => [
+                'lat' => floatval($attrs['lat']),
+                'lon' => floatval($attrs['lon']),
+                'name' => (string)$attrs['name']
+            ]];
         }
-        
-        return null;
+        error_log("FSA API Missing data fields for ICAO: " . $icao);
+        return ['status' => 'not_found', 'data' => null];
     } catch (Exception $e) {
-        return null;
+        error_log("FSA API Exception for ICAO: " . $icao . ": " . $e->getMessage());
+        return ['status' => 'connection_error', 'data' => null];
     }
 }
 
@@ -137,16 +161,15 @@ function generateRandomTime($reference_time, $minutes_before, $hours_after) {
 // Function to get timezone information using multiple API fallbacks
 function getTimezoneFromCoordinates($lat, $lon) {
     try {
-        // Try multiple timezone API endpoints for reliability
         $apis = [
-            // Primary: Open-Meteo (free, no auth required, very reliable)
-            "https://api.open-meteo.com/v1/timezone?latitude={$lat}&longitude={$lon}&format=json",
-            // Secondary: TimeAPI
-            "https://timeapi.io/api/v1/timezone/coordinate?latitude={$lat}&longitude={$lon}"
+            // Primary: TimeAPI (confirmed working)
+            "https://timeapi.io/api/v1/timezone/coordinate?latitude={$lat}&longitude={$lon}",
+            // Secondary: Open-Meteo (as backup)
+            "https://api.open-meteo.com/v1/timezone?latitude={$lat}&longitude={$lon}&format=json"
         ];
-        
+
         $last_error = null;
-        
+
         foreach ($apis as $url) {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $url);
@@ -157,62 +180,60 @@ function getTimezoneFromCoordinates($lat, $lon) {
             curl_setopt($ch, CURLOPT_TIMEOUT, 10);
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
             curl_setopt($ch, CURLOPT_USERAGENT, 'FSAirlines-Flight-Scheduler/1.1');
-            
             $response = curl_exec($ch);
             $error = curl_error($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
-            
+
             if ($error) {
                 $last_error = "CURL Error: " . $error . " (URL: " . substr($url, 0, 50) . "...)";
                 error_log("Timezone API CURL Error: " . $error . " for URL: " . $url);
                 continue;
             }
-            
+
             if ($response === false) {
                 $last_error = "No response from timezone API";
                 error_log("Timezone API: No response from " . $url);
                 continue;
             }
-            
+
             if ($httpCode !== 200) {
                 $last_error = "HTTP Error " . $httpCode . " from timezone API";
                 error_log("Timezone API: HTTP " . $httpCode . " from " . $url);
                 continue;
             }
-            
+
             $data = json_decode($response, true);
-            
+
             if ($data === null) {
                 $last_error = "Invalid JSON response from timezone API";
                 error_log("Timezone API: Invalid JSON from " . $url . " - Response: " . substr($response, 0, 100));
                 continue;
             }
-            
-            // Check if it's Open-Meteo response
-            if (isset($data['timezone'])) {
-                error_log("Timezone API: Success with Open-Meteo for lat={$lat}, lon={$lon}");
+
+            error_log("Timezone API: Trying URL " . $url . " for lat={$lat}, lon={$lon}. HTTP Code: {$httpCode}. Response length: " . strlen($response));
+
+            if (preg_match('/timeapi.io/', $url) && isset($data['timezone']) && isset($data['current_utc_offset_seconds'])) {
+                error_log("Timezone API: Success with TimeAPI for lat={$lat}, lon={$lon} - Timezone: {$data['timezone']}, Offset: {$data['current_utc_offset_seconds']}");
+                return [
+                    'timezone' => $data['timezone'],
+                    'utcOffset' => $data['current_utc_offset_seconds'] * 1
+                ];
+            } elseif (preg_match('/open-meteo/', $url) && isset($data['timezone'])) {
+                error_log("Timezone API: Success with Open-Meteo for lat={$lat}, lon={$lon} - Timezone: {$data['timezone']}");
                 return [
                     'timezone' => $data['timezone'],
                     'utcOffset' => $data['utc_offset_seconds'] ?? null
                 ];
             }
-            // Check if it's TimeAPI response
-            elseif (isset($data['timezone'])) {
-                error_log("Timezone API: Success with TimeAPI for lat={$lat}, lon={$lon}");
-                return [
-                    'timezone' => $data['timezone'],
-                    'utcOffset' => $data['utcOffset'] ?? null
-                ];
-            }
         }
-        
+
         error_log("Timezone API: All endpoints failed for lat={$lat}, lon={$lon}. Last error: " . $last_error);
         return null;
-    } catch (Exception $e) {
-        error_log("Timezone API Exception: " . $e->getMessage() . " for lat={$lat}, lon={$lon}");
-        return null;
-    }
+	} catch (Exception $e) {
+		error_log("Timezone API Exception: " . $e->getMessage() . " for lat={$lat}, lon={$lon}");
+		return null;
+	}
 }
 
 // Function to convert local time to UTC time
@@ -253,45 +274,80 @@ function addMinutesToTime($time, $minutes) {
 // Function to process form submission (extracted and adapted from index.php form submission logic)
 function processFormSubmission($icao_dep, $icao_arr, $aircraft, $cruise_altitude, $local_departure_time, $flight_mode, $latest_arrival_time, $minutes_before, $hours_after, $minutes_after, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $climb_speed_knots, $is_next_leg, $calculated_next_departure, $local_departure_time_var, $saved_prefs) {
     global $lang, $aircraft_list;
+
+    if (empty($icao_dep)) {
+        return [null, "Please enter departure ICAO code."];
+    }
     $error = null;
 
     $result = validateInputs($aircraft, $aircraft_list, $cruise_altitude, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $climb_speed_knots, $lang, $saved_prefs);
     if ($result['error']) {
         return [null, $result['error']];
     }
-    $aircraft_data = $result['aircraft_data'];
-    $cruise_speed = $result['cruise_speed'];
-    $speed_type = $result['speed_type'];
+	$aircraft_data = $result['aircraft_data'];
+	$cruise_speed = $result['cruise_speed'];
+	$speed_type = $result['speed_type'];
+	$turnaround_time = ($speed_type === 'mach') ? ($saved_prefs['turnaround_time_mach'] ?? '60') : ($saved_prefs['turnaround_time_knots'] ?? '40');
     $custom_speed = $result['custom_speed'];
     $custom_speed_type = $result['custom_speed_type'];
     $flight_type = ($speed_type === 'mach') ? 'IFR' : 'VFR';
 
     $dep_data = getAirportData($icao_dep);
-    $arr_data = getAirportData($icao_arr);
-    $combined_error = buildAirportErrors($dep_data, $arr_data, $icao_dep, $icao_arr, $lang);
-    if ($combined_error) {
-        return [null, $combined_error];
+    if ($dep_data === null || (is_array($dep_data) && isset($dep_data['status']) && $dep_data['status'] === 'connection_error')) {
+        return [null, null];
+    }
+    
+    $dep_airport = is_array($dep_data) ? $dep_data['data'] : $dep_data;
+    $combined_error = buildAirportErrors($dep_data, null, $icao_dep, '', $lang);
+    
+    if ($combined_error) return [null, $combined_error];
+
+    $arr_result = null;
+    if (!empty($icao_arr)) {
+        $arr_result = getAirportData($icao_arr);
+        if ($arr_result === null || (is_array($arr_result) && isset($arr_result['status']) && $arr_result['status'] === 'connection_error')) {
+            return [null, null];
+        }
+        
+        $combined_error = buildAirportErrors(null, $arr_result, '', $icao_arr, $lang);
+        if ($combined_error) return [null, $combined_error];
     }
 
-    $distance = calculateDistance($dep_data['lat'], $dep_data['lon'], $arr_data['lat'], $arr_data['lon']);
+    $arr_data = is_array($arr_result) ? $arr_result['data'] : $arr_result;
+    
+    if (!$arr_data) {
+        return [null, ''];
+    }
+
+    $distance = calculateDistance($dep_airport['lat'], $dep_airport['lon'], $arr_data['lat'], $arr_data['lon']);
     $calc_result = calculateFlightDetails($distance, $cruise_speed, $speed_type, $cruise_altitude, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $flight_type, $climb_speed_knots);
     $cruise_speed_tas = $calc_result['cruise_speed_tas'];
     $flight_time = $calc_result['flight_time'];
     $buffer_time = $calc_result['buffer_time'];
     $climb_rate = $calc_result['climb_rate'];
 
-    $tz_result = handleTimezoneAndTimes($dep_data['lat'], $dep_data['lon'], $local_departure_time, $is_next_leg, $calculated_next_departure, $minutes_before, $hours_after, $minutes_after, $flight_mode, $latest_arrival_time, $flight_time, $buffer_time, $arr_data['lat'], $arr_data['lon'], $lang);
+    $tz_result = handleTimezoneAndTimes($dep_airport['lat'], $dep_airport['lon'], $local_departure_time, $is_next_leg, $calculated_next_departure, $minutes_before, $hours_after, $minutes_after, $flight_mode, $latest_arrival_time, $flight_time, $buffer_time, $arr_data['lat'], $arr_data['lon'], $lang);
     if ($tz_result['error']) {
         return [null, $tz_result['error']];
+    }
+
+    $show_new_day_box = false;
+    if ($flight_mode === 'daily_schedule') {
+        $dep_minutes = (int)explode(':', $tz_result['local_departure_time_randomized'])[0] * 60 + (int)explode(':', $tz_result['local_departure_time_randomized'])[1];
+        $arrival_minutes = (int)explode(':', $tz_result['local_arrival_time'])[0] * 60 + (int)explode(':', $tz_result['local_arrival_time'])[1];
+        $latest_minutes = (int)explode(':', $latest_arrival_time)[0] * 60 + (int)explode(':', $latest_arrival_time)[1];
+        if ($arrival_minutes > $latest_minutes) {
+            $show_new_day_box = true;
+        }
     }
 
     $result = [
         'timezone_warning' => $tz_result['timezone_warning'],
         'new_day_warning' => $tz_result['new_day_warning'],
         'dep_icao' => $icao_dep,
-        'dep_name' => $dep_data['name'],
-        'dep_lat' => $dep_data['lat'],
-        'dep_lon' => $dep_data['lon'],
+        'dep_name' => $dep_airport['name'],
+        'dep_lat' => $dep_airport['lat'],
+        'dep_lon' => $dep_airport['lon'],
         'arr_icao' => $icao_arr,
         'arr_name' => $arr_data['name'],
         'arr_lat' => $arr_data['lat'],
@@ -325,7 +381,8 @@ function processFormSubmission($icao_dep, $icao_arr, $aircraft, $cruise_altitude
         'flight_mode' => $flight_mode,
         'latest_arrival_time' => $latest_arrival_time,
         'new_day_triggered' => $tz_result['new_day_triggered'],
-        'is_next_leg_call' => $is_next_leg
+        'is_next_leg_call' => $is_next_leg,
+        'show_new_day_box' => $show_new_day_box
     ];
 
     return [$result, $error];
@@ -333,11 +390,12 @@ function processFormSubmission($icao_dep, $icao_arr, $aircraft, $cruise_altitude
 
 function validateInputs($aircraft, $aircraft_list, $cruise_altitude, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $climb_speed_knots, $lang, $saved_prefs) {
     $error = null;
-    $aircraft_data = null;
-    $cruise_speed = null;
-    $speed_type = null;
-    $custom_speed = null;
-    $custom_speed_type = null;
+	$aircraft_data = null;
+	$cruise_speed = null;
+	$speed_type = 'mach'; // Default to avoid undefined
+	$custom_speed = null;
+	$custom_speed_type = null;
+
 
     if ($aircraft === 'custom') {
         $custom_speed = floatval($_POST['custom_speed'] ?? $saved_prefs['custom_speed'] ?? 0);
@@ -371,13 +429,19 @@ function validateInputs($aircraft, $aircraft_list, $cruise_altitude, $buffer_tim
 
 function buildAirportErrors($dep_data, $arr_data, $icao_dep, $icao_arr, $lang) {
     $error = null;
-    if (!$dep_data && !$arr_data) {
-        $error = sprintf($lang['error_both_airports'], $icao_dep, '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_dep) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_dep . '</a>', $icao_arr, '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_arr) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_arr . '</a>');
-    } elseif (!$dep_data) {
-        $error = sprintf($lang['error_departure_airport'], '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_dep) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_dep . '</a>', $icao_dep);
-    } elseif (!$arr_data) {
-        $error = sprintf($lang['error_arrival_airport'], '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_arr) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_arr . '</a>', $icao_arr);
+    
+    if ($dep_data === null || (is_array($dep_data) && isset($dep_data['status']) && $dep_data['status'] === 'connection_error')) {
+        return null;
     }
+    
+    if ($dep_data && is_array($dep_data) && isset($dep_data['status']) && $dep_data['status'] === 'not_found') {
+        $error = sprintf($lang['error_departure_airport'], '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_dep) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . htmlspecialchars($icao_dep) . '</a>', $icao_dep);
+    }
+    
+    if ($arr_data && is_array($arr_data) && isset($arr_data['status']) && $arr_data['status'] === 'not_found' && !empty($icao_arr)) {
+        $error = sprintf($lang['error_arrival_airport'], '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_arr) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . htmlspecialchars($icao_arr) . '</a>', $icao_arr);
+    }
+    
     return $error;
 }
 
@@ -394,10 +458,10 @@ function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_n
     $tz_info = getTimezoneFromCoordinates($dep_lat, $dep_lon);
     $error = null;
     $timezone_warning = false;
-    if (!$tz_info) {
-        $tz_info = ['timezone' => 'UTC', 'utcOffset' => '00:00'];
-        $timezone_warning = true;
-    }
+		if (!$tz_info) {
+			$tz_info = ['timezone' => 'UTC', 'utcOffset' => '00:00'];
+			$timezone_warning = true; // Alert on fallback if API fails
+		}
 
     $user_local_time = ($is_next_leg && !isset($_POST['new_day_flag'])) ? $calculated_next_departure : $local_departure_time;
     $utc_departure_time = convertLocalTimeToUTC($user_local_time, $tz_info['timezone']);

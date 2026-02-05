@@ -45,6 +45,7 @@ return [
     'next_leg' => 'Siguiente Tramo',
     'recalculate' => 'Recalcular Horas',
     'reset' => 'Reiniciar Todo',
+    'schedule_new_day' => 'Planificar otro día',
     
     // Results
     'departure' => 'SALIDA',
@@ -99,9 +100,10 @@ return [
     
     // Other
     'note' => 'NOTA',
-
+	'new_day_exceeds_latest_arrival' => 'La hora de salida para el siguiente vuelo supera la establecida como límite (%s). Puedes planificar un nuevo día o usar el botón "Siguiente tramo" una vez más para ignorar ese límite.',
     'fsa_login_note' => 'Para que el enlace funcione es necesario haber iniciado sesión en FSA previamente.',
     'version' => 'Versión',
     'copied' => '¡Copiado al portapapeles!',
+    'save_default' => 'Guardar selección',
 ];
 ?>

@@ -45,6 +45,7 @@ return [
     'next_leg' => 'Next Leg',
     'recalculate' => 'Recalculate Schedule',
     'reset' => 'Reset All',
+    'schedule_new_day' => 'Schedule a new day',
     
     // Results
     'departure' => 'DEPARTURE',
@@ -99,9 +100,10 @@ return [
         
     // Other
     'note' => 'NOTE',
-
+    'new_day_exceeds_latest_arrival' => 'The departure time for the next flight is later than established limit (%s). You can schedule a new day or use "Next leg" again button to override the limit.',
     'fsa_login_note' => 'For the link to work, you must be logged into FSA beforehand.',
     'version' => 'Version',
     'copied' => 'Copied to clipboard!',
+    'save_default' => 'Save defaults',	
 ];
 ?>
