@@ -68,11 +68,12 @@ return [
     'total_time' => 'Tiempo Total',
     'departure_icao' => 'ICAO DE SALIDA',
     'arrival_icao' => 'ICAO DE LLEGADA',
-    'departure_time' => 'HORA DE SALIDA',
-    'arrival_time' => 'HORA DE LLEGADA',
+    'departure_time' => 'HORA DE SALIDA (UTC)',
+    'arrival_time' => 'HORA DE LLEGADA (UTC)',
     'local_departure_time_reference' => 'Hora local (referencia)',
     'utc_departure_time_reference' => 'Hora UTC (referencia)',
     'actual_departure_time_local' => 'Hora local de salida',
+    'actual_arrival_time_local' => 'Hora local de llegada',
     
     // Units
     'feet' => 'pies',
@@ -93,13 +94,8 @@ return [
 	'error_both_airports' => 'Aeropuerto de salida %s no encontrado en la base de datos. %s<br><br>Aeropuerto de llegada %s no encontrado en la base de datos. %s',
     'error_departure_airport' => 'Aeropuerto de salida %s no encontrado en la base de datos. %s',
     'error_arrival_airport' => 'Aeropuerto de llegada %s no encontrado en la base de datos. %s',
-    'find_in_fsa' => 'Localizar el aeropuerto solicitado en FSAirlines',
 	'timezone_api_warning_title' => 'Problema de Conexión con el Servidor de Zona Horaria',
-	'timezone_api_warning_message' => 'No ha sido posible conectar con el servidor encargado de la conversión horaria. Por favor, usa el botón "Recalcular Horas" para volver a intentarlo',
-    
-    // Language selector
-    'lang_es' => '🇪🇸 Español',
-    'lang_en' => '🇬🇧 English',
+	'timezone_api_warning_message' => 'No ha sido posible conectar con el servidor encargado de la conversión horaria. Por favor, <b>usa el botón «Recalcular Horas»</b> para volver a intentarlo',
     
     // Other
     'note' => 'NOTA',

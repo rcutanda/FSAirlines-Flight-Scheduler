@@ -251,15 +251,97 @@ function addMinutesToTime($time, $minutes) {
 }
 
 // Function to process form submission (extracted and adapted from index.php form submission logic)
-function processFormSubmission($icao_dep, $icao_arr, $aircraft, $cruise_altitude, $local_departure_time, $flight_mode, $latest_arrival_time, $minutes_before, $hours_after, $minutes_after, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $climb_speed_knots, $is_next_leg, $calculated_next_departure, $local_departure_time_var) {
-    global $lang, $aircraft_list; // Access language array and aircraft list
+function processFormSubmission($icao_dep, $icao_arr, $aircraft, $cruise_altitude, $local_departure_time, $flight_mode, $latest_arrival_time, $minutes_before, $hours_after, $minutes_after, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $climb_speed_knots, $is_next_leg, $calculated_next_departure, $local_departure_time_var, $saved_prefs) {
+    global $lang, $aircraft_list;
     $error = null;
 
-    // Determine cruise speed and type
+    $result = validateInputs($aircraft, $aircraft_list, $cruise_altitude, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $climb_speed_knots, $lang, $saved_prefs);
+    if ($result['error']) {
+        return [null, $result['error']];
+    }
+    $aircraft_data = $result['aircraft_data'];
+    $cruise_speed = $result['cruise_speed'];
+    $speed_type = $result['speed_type'];
+    $custom_speed = $result['custom_speed'];
+    $custom_speed_type = $result['custom_speed_type'];
+    $flight_type = ($speed_type === 'mach') ? 'IFR' : 'VFR';
+
+    $dep_data = getAirportData($icao_dep);
+    $arr_data = getAirportData($icao_arr);
+    $combined_error = buildAirportErrors($dep_data, $arr_data, $icao_dep, $icao_arr, $lang);
+    if ($combined_error) {
+        return [null, $combined_error];
+    }
+
+    $distance = calculateDistance($dep_data['lat'], $dep_data['lon'], $arr_data['lat'], $arr_data['lon']);
+    $calc_result = calculateFlightDetails($distance, $cruise_speed, $speed_type, $cruise_altitude, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $flight_type, $climb_speed_knots);
+    $cruise_speed_tas = $calc_result['cruise_speed_tas'];
+    $flight_time = $calc_result['flight_time'];
+    $buffer_time = $calc_result['buffer_time'];
+    $climb_rate = $calc_result['climb_rate'];
+
+    $tz_result = handleTimezoneAndTimes($dep_data['lat'], $dep_data['lon'], $local_departure_time, $is_next_leg, $calculated_next_departure, $minutes_before, $hours_after, $minutes_after, $flight_mode, $latest_arrival_time, $flight_time, $buffer_time, $arr_data['lat'], $arr_data['lon'], $lang);
+    if ($tz_result['error']) {
+        return [null, $tz_result['error']];
+    }
+
+    $result = [
+        'timezone_warning' => $tz_result['timezone_warning'],
+        'new_day_warning' => $tz_result['new_day_warning'],
+        'dep_icao' => $icao_dep,
+        'dep_name' => $dep_data['name'],
+        'dep_lat' => $dep_data['lat'],
+        'dep_lon' => $dep_data['lon'],
+        'arr_icao' => $icao_arr,
+        'arr_name' => $arr_data['name'],
+        'arr_lat' => $arr_data['lat'],
+        'arr_lon' => $arr_data['lon'],
+        'distance' => $distance,
+        'aircraft' => $aircraft,
+        'cruise_speed' => $cruise_speed,
+        'cruise_speed_tas' => $cruise_speed_tas,
+        'cruise_altitude' => $cruise_altitude,
+        'speed_type' => $speed_type,
+        'local_departure_time' => $local_departure_time,
+        'utc_departure_time' => $tz_result['utc_departure_time'] ?? null,
+        'minutes_before_departure' => $minutes_before,
+        'hours_after_departure' => $hours_after,
+        'minutes_after_departure' => $minutes_after,
+        'departure_time' => $tz_result['departure_time'],
+        'arrival_time' => $tz_result['arrival_time'],
+        'flight_time' => $flight_time,
+        'buffer_time' => $buffer_time,
+        'climb_rate' => $climb_rate,
+        'climb_speed_knots' => $climb_speed_knots,
+        'flight_type' => $flight_type,
+        'buffer_time_vfr' => $buffer_time_vfr,
+        'buffer_time_ifr' => $buffer_time_ifr,
+        'climb_rate_vfr' => $climb_rate_vfr,
+        'climb_rate_ifr' => $climb_rate_ifr,
+        'custom_speed' => $custom_speed,
+        'custom_speed_type' => $custom_speed_type,
+        'local_departure_time_randomized' => $tz_result['local_departure_time_randomized'],
+        'local_arrival_time' => $tz_result['local_arrival_time'],
+        'flight_mode' => $flight_mode,
+        'latest_arrival_time' => $latest_arrival_time,
+        'new_day_triggered' => $tz_result['new_day_triggered'],
+        'is_next_leg_call' => $is_next_leg
+    ];
+
+    return [$result, $error];
+}
+
+function validateInputs($aircraft, $aircraft_list, $cruise_altitude, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $climb_speed_knots, $lang, $saved_prefs) {
+    $error = null;
+    $aircraft_data = null;
+    $cruise_speed = null;
+    $speed_type = null;
+    $custom_speed = null;
+    $custom_speed_type = null;
+
     if ($aircraft === 'custom') {
-        $custom_speed = floatval($_POST['custom_speed']);
-        $custom_speed_type = $_POST['custom_speed_type'];
-        
+        $custom_speed = floatval($_POST['custom_speed'] ?? $saved_prefs['custom_speed'] ?? 0);
+        $custom_speed_type = $_POST['custom_speed_type'] ?? $saved_prefs['custom_speed_type'] ?? 'mach';
         if ($custom_speed_type === 'mach') {
             $cruise_speed = $custom_speed;
             $speed_type = 'mach';
@@ -268,192 +350,117 @@ function processFormSubmission($icao_dep, $icao_arr, $aircraft, $cruise_altitude
             $speed_type = 'ktas';
         }
     } else {
-        $aircraft_data = $aircraft_list[$aircraft];
-        $cruise_speed = $aircraft_data['speed'];
-        $speed_type = $aircraft_data['type'];
-        $cruise_altitude = $aircraft_data['altitude'];
-    }
-    
-    // Validate inputs
-    if ($cruise_speed <= 0) {
-        $error = $lang['error_cruise_speed'];
-    } elseif ($cruise_altitude <= 0) {
-        $error = $lang['error_cruise_altitude'];
-    } elseif ($buffer_time_vfr < 0 || $buffer_time_ifr < 0) {
-        $error = $lang['error_buffer_time'];
-    } elseif ($climb_rate_vfr <= 0 || $climb_rate_ifr <= 0) {
-        $error = $lang['error_climb_rate'];
-    } elseif ($climb_speed_knots <= 0) {
-        $error = $lang['error_climb_speed'];
-    } else {
-        // Get departure airport data
-        $dep_data = getAirportData($icao_dep);
-        
-        if (!$dep_data && !getAirportData($icao_arr)) {
-            $error = sprintf($lang['error_both_airports'], $icao_dep, '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_dep) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_dep . '</a>', $icao_arr, '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_arr) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_arr . '</a>');
-        } elseif (!$dep_data) {
-            $error = sprintf($lang['error_departure_airport'], '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_dep) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_dep . '</a>', $icao_dep);
+        $aircraft_data = $aircraft_list[$aircraft] ?? null;
+        if (!$aircraft_data) {
+            $error = 'Invalid aircraft selected.';
         } else {
-            // Get arrival airport data
-            $arr_data = getAirportData($icao_arr);
-            
-            if (!$arr_data) {
-                $error = sprintf($lang['error_arrival_airport'], '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_arr) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_arr . '</a>', $icao_arr);
-            } else {
-                // Calculate distance
-                $distance = calculateDistance(
-                    $dep_data['lat'], $dep_data['lon'],
-                    $arr_data['lat'], $arr_data['lon']
-                );
-                
-                // Determine flight type, buffer time, and climb rate based on speed type
-                if ($speed_type === 'mach') {
-                    $cruise_speed_tas = machToTAS($cruise_speed, $cruise_altitude);
-                    $buffer_time = $buffer_time_ifr;
-                    $climb_rate = $climb_rate_ifr;
-                    $flight_type = 'IFR';
-                } else {
-                    $cruise_speed_tas = $cruise_speed;
-                    $buffer_time = $buffer_time_vfr;
-                    $climb_rate = $climb_rate_vfr;
-                    $flight_type = 'VFR';
-                }
-                
-                // STEP 1: Get timezone information for departure airport
-                $tz_info = getTimezoneFromCoordinates($dep_data['lat'], $dep_data['lon']);
-                
-                // If timezone API fails, assume user entered UTC time directly
-                $timezone_warning = false;
-                if (!$tz_info) {
-                    // FALLBACK: Use UTC timezone (user should enter UTC time)
-                    $tz_info = ['timezone' => 'UTC', 'utcOffset' => '00:00'];
-                    $timezone_warning = true;
-                }
-                
-                // STEP 2: Get user's local departure time from form (or use override from daily schedule)
-                if ($is_next_leg && !isset($_POST['new_day_flag'])) {
-                    $user_local_time = $calculated_next_departure;
-                } else {
-                    $user_local_time = trim($_POST['local_departure_time']);
-                }
-                $utc_departure_time = convertLocalTimeToUTC($user_local_time, $tz_info['timezone']);
-                
-                if (!$utc_departure_time) {
-                    $error = $lang['error_time_conversion'];
-                } else {
-                    // STEP 4: Generate departure time
-                    if ($is_next_leg) {
-                        // For next leg, use exact time without randomization
-                        $departure_time = roundToFiveMinutes($utc_departure_time);
-                    } elseif (isset($_POST['new_day_flag'])) {
-                        // Use User's selected time without randomization
-                        $departure_time = roundToFiveMinutes($utc_departure_time);
-                    } else {
-                        // Randomization for new flights
-                        if ($flight_mode === 'daily_schedule') {
-                            $time_after_minutes = intval($minutes_after);
-                            $random_dep_time = generateRandomTime($utc_departure_time, $minutes_before, $time_after_minutes / 60);
-                        } else {
-                            $random_dep_time = generateRandomTime($utc_departure_time, $minutes_before, $hours_after);
-                        }
-                        $departure_time = roundToFiveMinutes($random_dep_time);
-                    }
-                    
-                    // Calculate flight time
-                    $flight_time = calculateFlightTime($distance, $cruise_speed_tas, $cruise_altitude, $climb_rate, $climb_speed_knots);
-                    
-                    $total_time = $flight_time + $buffer_time;
-                    
-                    // Calculate arrival time
-                    $arrival_time_raw = addMinutesToTime($departure_time, $total_time);
-                    
-                    // Round arrival time to 5 minutes
-                    $arrival_time = roundToFiveMinutes($arrival_time_raw);
-                    
-                    // Convert randomized UTC time back to local time for display
-                    try {
-                        $tz = new DateTimeZone($tz_info['timezone']);
-                        $dateTime = new DateTime($departure_time, new DateTimeZone('UTC'));
-                        $dateTime->setTimezone($tz);
-                        $local_departure_time_randomized = $dateTime->format('H:i');
-                    } catch (Exception $e) {
-                        $local_departure_time_randomized = $departure_time;
-                    }
-                    
-                    // Check if this is a "next leg" call
-                    $is_next_leg_call = intval($is_next_leg);
-                    
-                    // For daily schedule mode: check if arrival exceeds latest allowed time
-                    $new_day_triggered = false;
-                    if ($is_next_leg) {
-                        $new_day_triggered = false; // Default to false for non-daily modes
-                        if ($flight_mode === 'daily_schedule') {
-                            // Convert arrival time to local time for comparison with latest_arrival_time
-                            try {
-                                $tz = new DateTimeZone($tz_info['timezone']);
-                                $arrivalDateTime = new DateTime($arrival_time, new DateTimeZone('UTC'));
-                                $arrivalDateTime->setTimezone($tz);
-                                $arrival_time_local = $arrivalDateTime->format('H:i');
-                                
-                                // Compare times
-                                $arrival_minutes = (int)explode(':', $arrival_time_local)[0] * 60 + (int)explode(':', $arrival_time_local)[1];
-                                $latest_minutes = (int)explode(':', $latest_arrival_time)[0] * 60 + (int)explode(':', $latest_arrival_time)[1];
-                                
-                                if ($arrival_minutes > $latest_minutes || ($arrival_minutes < $latest_minutes && $latest_minutes > 18 * 60)) {
-                                    $new_day_triggered = true;
-                                    $daily_schedule_warning = sprintf($lang['new_day_warning'], htmlspecialchars($latest_arrival_time));
-                                }
-                            } catch (Exception $e) {
-                                // If conversion fails, proceed normally
-                            }
-                        }
-                    }
-                    
-                    $result = [
-                        'timezone_warning' => $timezone_warning,
-                        'new_day_warning' => $daily_schedule_warning ?? null,
-                        'dep_icao' => $icao_dep,
-                        'dep_name' => $dep_data['name'],
-                        'dep_lat' => $dep_data['lat'],
-                        'dep_lon' => $dep_data['lon'],
-                        'arr_icao' => $icao_arr,
-                        'arr_name' => $arr_data['name'],
-                        'arr_lat' => $arr_data['lat'],
-                        'arr_lon' => $arr_data['lon'],
-                        'distance' => $distance,
-                        'aircraft' => $aircraft,
-                        'cruise_speed' => $cruise_speed,
-                        'cruise_speed_tas' => $cruise_speed_tas,
-                        'cruise_altitude' => $cruise_altitude,
-                        'speed_type' => $speed_type,
-                        'local_departure_time' => $local_departure_time,
-                        'utc_departure_time' => $utc_departure_time,
-                        'minutes_before_departure' => $minutes_before,
-                        'hours_after_departure' => $hours_after,
-                        'minutes_after_departure' => $minutes_after,
-                        'departure_time' => $departure_time,
-                        'arrival_time' => $arrival_time,
-                        'flight_time' => $flight_time,
-                        'buffer_time' => $buffer_time,
-                        'climb_rate' => $climb_rate,
-                        'climb_speed_knots' => $climb_speed_knots,
-                        'flight_type' => $flight_type,
-                        'buffer_time_vfr' => $buffer_time_vfr,
-                        'buffer_time_ifr' => $buffer_time_ifr,
-                        'climb_rate_vfr' => $climb_rate_vfr,
-                        'climb_rate_ifr' => $climb_rate_ifr,
-                        'custom_speed' => ($aircraft === 'custom') ? $custom_speed : null,
-                        'custom_speed_type' => ($aircraft === 'custom') ? $custom_speed_type : null,
-                        'local_departure_time_randomized' => $local_departure_time_randomized,
-                        'flight_mode' => $flight_mode,
-                        'latest_arrival_time' => $latest_arrival_time,
-                        'new_day_triggered' => $new_day_triggered,
-                        'is_next_leg_call' => $is_next_leg_call
-                    ];
-                }
+            $cruise_speed = $aircraft_data['speed'];
+            $speed_type = $aircraft_data['type'];
+            $cruise_altitude = $aircraft_data['altitude'];
+        }
+    }
+
+    if ($cruise_speed <= 0) $error = $lang['error_cruise_speed'];
+    if ($cruise_altitude <= 0) $error = $lang['error_cruise_altitude'];
+    if ($buffer_time_vfr < 0 || $buffer_time_ifr < 0) $error = $lang['error_buffer_time'];
+    if ($climb_rate_vfr <= 0 || $climb_rate_ifr <= 0) $error = $lang['error_climb_rate'];
+    if ($climb_speed_knots <= 0) $error = $lang['error_climb_speed'];
+
+    return ['error' => $error, 'aircraft_data' => $aircraft_data, 'cruise_speed' => $cruise_speed, 'speed_type' => $speed_type, 'custom_speed' => $custom_speed, 'custom_speed_type' => $custom_speed_type];
+}
+
+function buildAirportErrors($dep_data, $arr_data, $icao_dep, $icao_arr, $lang) {
+    $error = null;
+    if (!$dep_data && !$arr_data) {
+        $error = sprintf($lang['error_both_airports'], $icao_dep, '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_dep) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_dep . '</a>', $icao_arr, '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_arr) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_arr . '</a>');
+    } elseif (!$dep_data) {
+        $error = sprintf($lang['error_departure_airport'], '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_dep) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_dep . '</a>', $icao_dep);
+    } elseif (!$arr_data) {
+        $error = sprintf($lang['error_arrival_airport'], '<a href="https://www.fsairlines.net/crewcenter/index.php?icao=' . urlencode($icao_arr) . '&status=db_apts&status2=logged&submit=Submit" target="_blank">' . $icao_arr . '</a>', $icao_arr);
+    }
+    return $error;
+}
+
+function calculateFlightDetails($distance, $cruise_speed, $speed_type, $cruise_altitude, $buffer_time_vfr, $buffer_time_ifr, $climb_rate_vfr, $climb_rate_ifr, $flight_type, $climb_speed_knots) {
+    $cruise_speed_tas = ($speed_type === 'mach') ? machToTAS($cruise_speed, $cruise_altitude) : $cruise_speed;
+    $buffer_time = ($speed_type === 'mach') ? $buffer_time_ifr : $buffer_time_vfr;
+    $climb_rate = ($speed_type === 'mach') ? $climb_rate_ifr : $climb_rate_vfr;
+    $flight_time = calculateFlightTime($distance, $cruise_speed_tas, $cruise_altitude, $climb_rate, $climb_speed_knots);
+
+    return ['cruise_speed_tas' => $cruise_speed_tas, 'flight_time' => $flight_time, 'buffer_time' => $buffer_time, 'climb_rate' => $climb_rate];
+}
+
+function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_next_leg, $calculated_next_departure, $minutes_before, $hours_after, $minutes_after, $flight_mode, $latest_arrival_time, $flight_time, $buffer_time, $arr_lat, $arr_lon, $lang) {
+    $tz_info = getTimezoneFromCoordinates($dep_lat, $dep_lon);
+    $error = null;
+    $timezone_warning = false;
+    if (!$tz_info) {
+        $tz_info = ['timezone' => 'UTC', 'utcOffset' => '00:00'];
+        $timezone_warning = true;
+    }
+
+    $user_local_time = ($is_next_leg && !isset($_POST['new_day_flag'])) ? $calculated_next_departure : $local_departure_time;
+    $utc_departure_time = convertLocalTimeToUTC($user_local_time, $tz_info['timezone']);
+    if (!$utc_departure_time) {
+        $error = $lang['error_time_conversion'];
+        return ['error' => $error];
+    }
+
+    $total_time = $flight_time + $buffer_time;
+    if ($is_next_leg) {
+        $departure_time = roundToFiveMinutes($utc_departure_time);
+    } elseif (isset($_POST['new_day_flag'])) {
+        $departure_time = roundToFiveMinutes($utc_departure_time);
+    } else {
+        $time_after_minutes = ($flight_mode === 'daily_schedule') ? intval($minutes_after) : intval($hours_after * 60);
+        $random_dep_time = generateRandomTime($utc_departure_time, $minutes_before, $time_after_minutes / 60);
+        $departure_time = roundToFiveMinutes($random_dep_time);
+    }
+    $arrival_time_raw = addMinutesToTime($departure_time, $total_time);
+    $arrival_time = roundToFiveMinutes($arrival_time_raw);
+
+    try {
+        $tz = new DateTimeZone($tz_info['timezone']);
+        $dateTime = new DateTime($departure_time, new DateTimeZone('UTC'));
+        $dateTime->setTimezone($tz);
+        $local_departure_time_randomized = $dateTime->format('H:i');
+    } catch (Exception $e) {
+        $local_departure_time_randomized = $departure_time;
+    }
+
+    $tz_info_arr = getTimezoneFromCoordinates($arr_lat, $arr_lon);
+    $local_arrival_time = null;
+    if ($tz_info_arr) {
+        try {
+            $tz_arr = new DateTimeZone($tz_info_arr['timezone']);
+            $arrDateTime = new DateTime($arrival_time, new DateTimeZone('UTC'));
+            $arrDateTime->setTimezone($tz_arr);
+            $local_arrival_time = $arrDateTime->format('H:i');
+        } catch (Exception $e) {
+            $local_arrival_time = $arrival_time;
+        }
+    } else {
+        $local_arrival_time = $arrival_time;
+    }
+
+    $new_day_triggered = false;
+    $new_day_warning = null;
+    if ($is_next_leg && $flight_mode === 'daily_schedule') {
+        try {
+            $tz = new DateTimeZone($tz_info['timezone']);
+            $arrivalDateTime = new DateTime($arrival_time, new DateTimeZone('UTC'));
+            $arrivalDateTime->setTimezone($tz);
+            $arrival_time_local = $arrivalDateTime->format('H:i');
+            $arrival_minutes = (int)explode(':', $arrival_time_local)[0] * 60 + (int)explode(':', $arrival_time_local)[1];
+            $latest_minutes = (int)explode(':', $latest_arrival_time)[0] * 60 + (int)explode(':', $latest_arrival_time)[1];
+            if ($arrival_minutes > $latest_minutes || ($arrival_minutes < $latest_minutes && $latest_minutes > 18 * 60)) {
+                $new_day_triggered = true;
+                $new_day_warning = sprintf($lang['new_day_warning'], htmlspecialchars($latest_arrival_time));
             }
+        } catch (Exception $e) {
+            // If conversion fails, proceed normally
         }
     }
     
-    return [$result ?? null, $error];
+    return ['error' => $error, 'departure_time' => $departure_time, 'arrival_time' => $arrival_time, 'local_departure_time_randomized' => $local_departure_time_randomized, 'local_arrival_time' => $local_arrival_time, 'timezone_warning' => $timezone_warning, 'new_day_triggered' => $new_day_triggered, 'new_day_warning' => $new_day_warning, 'utc_departure_time' => $utc_departure_time];
 }

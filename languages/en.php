@@ -68,11 +68,12 @@ return [
     'total_time' => 'Total Time',
     'departure_icao' => 'DEPARTURE ICAO',
     'arrival_icao' => 'ARRIVAL ICAO',
-    'departure_time' => 'DEPARTURE TIME',
-    'arrival_time' => 'ARRIVAL TIME',
+    'departure_time' => 'DEPARTURE TIME (UTC)',
+    'arrival_time' => 'ARRIVAL TIME (UTC)',
     'local_departure_time_reference' => 'Local time (reference)',
     'utc_departure_time_reference' => 'UTC time (reference)',
     'actual_departure_time_local' => 'Local departure time',
+    'actual_arrival_time_local' => 'Local arrival time',
 
     // Units
     'feet' => 'feet',
@@ -93,14 +94,9 @@ return [
 	'error_both_airports' => 'Departure airport %s not found in the database. %s<br><br>Arrival airport %s not found in the database. %s',
     'error_departure_airport' => 'Departure airport %s not found in the database. %s',
     'error_arrival_airport' => 'Arrival airport %s not found in the database. %s',
-    'find_in_fsa' => 'Find the requested airport in FSAirlines',
 	'timezone_api_warning_title' => 'Connection Problem with Timezone Server',
-	'timezone_api_warning_message' => 'There was a connection problem with the server in charge of making the timezone conversion. Please, use the "Recalculate Schedule" button to try again.',
-    
-    // Language selector
-    'lang_es' => '🇪🇸 Español',
-    'lang_en' => '🇬🇧 English',
-    
+	'timezone_api_warning_message' => 'There was a connection problem with the server in charge of making the timezone conversion. Please, <b>use the "Recalculate Schedule"</b> button to try again.',
+        
     // Other
     'note' => 'NOTE',
 
