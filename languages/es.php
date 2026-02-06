@@ -105,5 +105,6 @@ return [
     'version' => 'Versión',
     'copied' => '¡Copiado al portapapeles!',
     'save_default' => 'Guardar selección',
+	'saved_default' => 'Selección guardada',
 ];
 ?>

@@ -34,14 +34,14 @@ $saved_prefs = loadPreferences($prefs_file);
 
 // Handle save departure default button
 if (isset($_POST['save_departure_default'])) {
-    $saved_prefs['local_departure_time'] = $_POST['departure_time'] ?? '07:00';
+    $saved_prefs['local_departure_time'] = $_POST['local_departure_time'] ?? '07:00';
     savePreferences($prefs_file, $saved_prefs);
     exit();
 }
 
 // Handle save arrival default button
 if (isset($_POST['save_arrival_default'])) {
-    $saved_prefs['latest_arrival_time'] = $_POST['arrival_time'] ?? '23:55';
+    $saved_prefs['latest_arrival_time'] = $_POST['latest_arrival_time'] ?? '23:55';
     savePreferences($prefs_file, $saved_prefs);
     exit();
 }

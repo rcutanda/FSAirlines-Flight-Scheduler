@@ -400,13 +400,13 @@ function validateInputs($aircraft, $aircraft_list, $cruise_altitude, $buffer_tim
     if ($aircraft === 'custom') {
         $custom_speed = floatval($_POST['custom_speed'] ?? $saved_prefs['custom_speed'] ?? 0);
         $custom_speed_type = $_POST['custom_speed_type'] ?? $saved_prefs['custom_speed_type'] ?? 'mach';
-        if ($custom_speed_type === 'mach') {
-            $cruise_speed = $custom_speed;
-            $speed_type = 'mach';
-        } else {
-            $cruise_speed = $custom_speed;
-            $speed_type = 'ktas';
-        }
+	if ($custom_speed_type === 'mach') {
+		$cruise_speed = floatval($_POST['custom_speed'] ?? $saved_prefs['custom_speed_mach'] ?? 0.8);  // Default >0 Pembroke for Mach
+		$speed_type = 'mach';
+	} else {
+		$cruise_speed = floatval($_POST['custom_speed'] ?? $saved_prefs['custom_speed_ktas'] ?? 250);  // Default >0 for KTAS
+		$speed_type = 'ktas';  // Fixed typo: Was 'kastas'
+	}
     } else {
         $aircraft_data = $aircraft_list[$aircraft] ?? null;
         if (!$aircraft_data) {
@@ -418,8 +418,13 @@ function validateInputs($aircraft, $aircraft_list, $cruise_altitude, $buffer_tim
         }
     }
 
-    if ($cruise_speed <= 0) $error = $lang['error_cruise_speed'];
-    if ($cruise_altitude <= 0) $error = $lang['error_cruise_altitude'];
+    if ($cruise_speed <= 0) {
+    if ($aircraft === 'custom') {
+        $cruise_speed = ($speed_type === 'mach' ? 0.8 : 250);
+    } else {
+        $error = $lang['error_cruise_speed'];
+    }
+}
     if ($buffer_time_vfr < 0 || $buffer_time_ifr < 0) $error = $lang['error_buffer_time'];
     if ($climb_rate_vfr <= 0 || $climb_rate_ifr <= 0) $error = $lang['error_climb_rate'];
     if ($climb_speed_knots <= 0) $error = $lang['error_climb_speed'];

@@ -104,6 +104,7 @@ return [
     'fsa_login_note' => 'For the link to work, you must be logged into FSA beforehand.',
     'version' => 'Version',
     'copied' => 'Copied to clipboard!',
-    'save_default' => 'Save defaults',	
+    'save_default' => 'Save as default',
+	'saved_default' => 'Default time saved!',
 ];
 ?>

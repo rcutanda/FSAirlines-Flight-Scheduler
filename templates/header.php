@@ -20,11 +20,10 @@ function saveDeparturDefault() {
         method: 'POST',
         body: formData
     }).then(() => {
-        // No reload, but refresh inputs or alert
-        alert('Default saved!');
+        // Show notification instead of alert
+        showSavedNotification();
     });
 }
-
 function saveArrivalDefault() {
     const time = document.getElementById('latest_arrival_time').value;
     if (!time) {
@@ -38,9 +37,114 @@ function saveArrivalDefault() {
         method: 'POST',
         body: formData
     }).then(() => {
-        alert('Default saved!');
+        // Show notification instead of alert
+        showSavedNotification();
     });
 }
+</script>
+<script>
+    function toggleCustomSpeed() {
+        const aircraftSelect = document.getElementById('aircraft');
+        const customFields = document.getElementById('customSpeedFields');
+        const selectedAircraft = aircraftSelect ? aircraftSelect.value : '';
+        if (selectedAircraft === 'custom') {
+            customFields && customFields.classList.add('show');
+        } else {
+            customFields && customFields.classList.remove('show');
+        }
+        // Do not break the logic, so keep updateAltitudeForAircraft replacement
+        const altitudeInput = document.getElementById('cruise_altitude');
+        const customSpeedTypeSelect = document.getElementById('custom_speed_type');
+
+        const aircraftData = <?php echo json_encode($aircraft_list); ?>;
+        if (selectedAircraft === 'custom') {
+            if (customSpeedTypeSelect && customSpeedTypeSelect.value === 'ktas') {
+                altitudeInput.value = '24000';  // Fixed: Was console.log('36500');
+            } else {
+                altitudeInput.value = '35000';
+            }
+        } else if (aircraftData[selectedAircraft]) {
+            altitudeInput.value = aircraftData[selectedAircraft]['altitude'];
+        }
+    }
+
+    function toggleLatestArrivalTime() {
+        const flightMode = document.getElementById('flight_mode') ? document.getElementById('flight_mode').value : 'charter';
+        const latestArrivalInline = document.getElementById('latestArrivalInline');
+        const hoursAfterRow = document.getElementById('hoursAfterRow');
+        const minutesAfterRow = document.getElementById('minutesAfterRow');
+        const minutesBeforeInput = document.getElementById('minutes_before_departure');
+        const hoursAfterInput = document.getElementById('hours_after_departure');
+        const minutesAfterInput = document.getElementById('minutes_after_departure');
+
+        if (flightMode === 'daily_schedule') {
+            if (latestArrivalInline) latestArrivalInline.style.display = 'block';
+            if (hoursAfterRow) hoursAfterRow.style.display = 'none';
+            if (minutesAfterRow) minutesAfterRow.classList.add('show');
+            if (minutesBeforeInput) minutesBeforeInput.value = '30';
+            if (hoursAfterInput) hoursAfterInput.value = '15';
+            if (minutesAfterInput) minutesAfterInput.value = '30';
+        } else {
+            if (latestArrivalInline) latestArrivalInline.style.display = 'none';
+            if (hoursAfterRow) hoursAfterRow.style.display = 'block';
+            if (minutesAfterRow) minutesAfterRow.classList.remove('show');
+        }
+    }
+
+    function updateAltitudeForAircraft() {
+        const aircraftSelect = document.getElementById('aircraft');
+        const altitudeInput = document.getElementById('cruise_altitude');
+        const customSpeedTypeSelect = document.getElementById('custom_speed_type');
+
+        const aircraftData = <?php echo json_encode($aircraft_list); ?>;
+        const selectedAircraft = aircraftSelect ? aircraftSelect.value : '';
+        if (selectedAircraft === 'custom') {
+            if (customSpeedTypeSelect && customSpeedTypeSelect.value === 'ktas') {
+                altitudeInput.value = '24000';
+            } else {
+                altitudeInput.value = '35000';
+            }
+        } else if (aircraftData[selectedAircraft]) {
+            altitudeInput.value = aircraftData[selectedAircraft]['altitude'];
+        }
+    }
+
+    function updateSpeedTypeSelector() {
+        const customSpeedTypeSelect = document.getElementById('custom_speed_type');
+        const customSpeedInput = document.getElementById('custom_speed');
+        const climbSpeedInput = document.getElementById('climb_speed_knots');
+
+        let saved_mach_speed = '<?php echo htmlspecialchars($saved_prefs['custom_speed_mach'] ?? '0.8'); ?>';
+        let saved_ktas_speed = '<?php echo htmlspecialchars($saved_prefs['custom_speed_ktas'] ?? '250'); ?>';
+
+        if (customSpeedTypeSelect.value === 'ktas') {
+            customSpeedInput.value = saved_ktas_speed;
+            climbSpeedInput.value = Math.round(parseFloat(saved_ktas_speed) * 0.7);
+        } else if (customSpeedTypeSelect.value === 'mach') {
+            customSpeedInput.value = saved_mach_speed;
+            climbSpeedInput.value = 250;
+        }
+    }
+
+    function updateClimbSpeedForCustom() {
+        const aircraftSelect = document.getElementById('aircraft');
+        const customSpeedTypeSelect = document.getElementById('custom_speed_type');
+        const customSpeedInput = document.getElementById('custom_speed');
+        const climbSpeedInput = document.getElementById('climb_speed_knots');
+
+        if (aircraftSelect.value === 'custom') {
+            const customSpeed = parseFloat(customSpeedInput.value);
+            if (!isNaN(customSpeed) && customSpeed > 0) {
+                if (customSpeedTypeSelect.value === 'ktas') {
+                    climbSpeedInput.value = Math.round(customSpeed * 0.7);
+                }
+                // For Mach, climbSpeedInput remains 250 (as in updateSpeedTypeSelector)
+            } else {
+                // Use default Mach case
+                climbSpeedInput.value = 250;
+            }
+        }
+    }
 </script>
 </head>
 <body>
