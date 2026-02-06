@@ -13,11 +13,16 @@ function saveDeparturDefault() {
         alert('Please select a time first');
         return;
     }
+    const form = document.getElementById('mainForm');
+    const formData = new FormData(form);
+    formData.append('save_departure_default', '1');
     fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'save_departure_default=1&departure_time=' + encodeURIComponent(time)
-    }).then(() => location.reload());
+        body: formData
+    }).then(() => {
+        // No reload, but refresh inputs or alert
+        alert('Default saved!');
+    });
 }
 
 function saveArrivalDefault() {
@@ -26,11 +31,15 @@ function saveArrivalDefault() {
         alert('Please select a time first');
         return;
     }
+    const form = document.getElementById('mainForm');
+    const formData = new FormData(form);
+    formData.append('save_arrival_default', '1');
     fetch('<?php echo $_SERVER['PHP_SELF']; ?>', {
         method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'save_arrival_default=1&arrival_time=' + encodeURIComponent(time)
-    }).then(() => location.reload());
+        body: formData
+    }).then(() => {
+        alert('Default saved!');
+    });
 }
 </script>
 </head>

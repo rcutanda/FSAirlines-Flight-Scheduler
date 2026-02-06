@@ -3,7 +3,7 @@ return [
     // Page
     'page_title' => 'FSAirlines Flight Scheduler',
     'title' => 'FSAirlines Flight Scheduler',
-    'subtitle' => 'Calculate random departure times in UTC for FSAirlines within a specified range, and the corresponding arrival',
+    'subtitle' => 'Calculate random departure times in UTC for FSAirlines (within a specified range) and the corresponding arrival',
     
     // Form Labels
     'departure_icao' => 'Departure ICAO',

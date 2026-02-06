@@ -29,24 +29,28 @@
         </div>
     </div>
     
-    <div class="form-row">
+<div class="form-row flight-row">
         <div class="form-group">
-            <label for="local_departure_time"><?php echo $lang['local_departure_time']; ?><br>(HH:MM):</label>
+            <label for="local_departure_time"><?php echo $lang['local_departure_time']; ?> <span class="info-icon" title="<?php echo $lang['local_departure_time_help']; ?>" style="cursor: help;">i</span></label>
             <div>
-                <input 
-                    type="time" 
-                    id="local_departure_time" 
-                    name="local_departure_time" 
-                    value="<?php echo htmlspecialchars($local_departure_time); ?>"
-                    style="font-size: 16px; padding: 15px; height: 60px; width: 100%; box-sizing: border-box;"
-                >
-                <button type="button" style="margin-top: 8px; padding: 8px 12px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="saveDeparturDefault()">💾 <?php echo $lang['save_default'] ?? 'Save default'; ?></button>
+                <input
+					type="text"
+					inputmode="numeric"
+					placeholder="08:00"
+					id="local_departure_time"
+					name="local_departure_time"
+					value="<?php echo htmlspecialchars($local_departure_time); ?>"
+					style="font-size: 16px; padding: 15px 10px; height: 60px; width: 160px; box-sizing: border-box;"
+					maxlength="5"
+					oninput="this.value = this.value.replace(/[^0-9:]/g, '').replace(/^([0-9]{2})([0-9]+)/, '$1:$2').substring(0,5);"
+				>
+                <button type="button" style="margin-top: 8px; padding: 8px 12px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; width: 160px;" onclick="saveDeparturDefault()">💾 <?php echo $lang['save_default'] ?? 'Save default'; ?></button>
             </div>
         </div>
-        
+
         <div class="form-group">
             <label for="flight_mode"><?php echo $lang['flight_mode']; ?>:</label>
-            <select name="flight_mode" id="flight_mode" required style="font-size: 16px; padding: 15px; height: 60px; width: 100%;" onchange="toggleLatestArrivalTime()">
+            <select name="flight_mode" id="flight_mode" required style="font-size: 16px; padding: 15px; height: 60px; width: 180px;" onchange="toggleLatestArrivalTime()">
                 <option value="charter" <?php echo (!isset($_POST['flight_mode']) || $_POST['flight_mode'] === 'charter') ? 'selected' : ''; ?>>
                     <?php echo $lang['charter_flight']; ?>
                 </option>
@@ -55,23 +59,25 @@
                 </option>
             </select>
         </div>
-        
+
         <div class="form-group" id="latestArrivalInline" style="display: none;">
-            <label for="latest_arrival_time"><?php echo $lang['latest_arrival_time']; ?><br>(HH:MM):</label>
+            <label for="latest_arrival_time"><?php echo $lang['latest_arrival_time']; ?>:<br></label>
             <div>
-                <input 
-                    type="time" 
-                    id="latest_arrival_time" 
-                    name="latest_arrival_time" 
-                    value="<?php echo htmlspecialchars($latest_arrival_time); ?>"
-                    style="font-size: 16px; padding: 15px; height: 60px; width: 100%; box-sizing: border-box;"
-                >
-                <button type="button" style="margin-top: 8px; padding: 8px 12px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="saveArrivalDefault()">💾 <?php echo $lang['save_default'] ?? 'Save default'; ?></button>
+                <input
+					type="text"
+					inputmode="numeric"
+					placeholder="23:55"
+					id="latest_arrival_time"
+					name="latest_arrival_time"
+					value="<?php echo htmlspecialchars($latest_arrival_time); ?>"
+					style="font-size: 16px; padding: 15px 10px; height: 60px; width: 160px; box-sizing: border-box;"
+					maxlength="5"
+					oninput="this.value = this.value.replace(/[^0-9:]/g, '').replace(/^([0-9]{2})([0-9]+)/, '$1:$2').substring(0,5);"
+				>
+                <button type="button" style="margin-top: 8px; padding: 8px 12px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; width: 160px;" onclick="saveArrivalDefault()">💾 <?php echo $lang['save_default'] ?? 'Save default'; ?></button>
             </div>
         </div>
     </div>
-    
-    <div class="help-text"><?php echo $lang['local_departure_time_help']; ?></div>
     
     <div class="form-group">
         <label for="aircraft"><?php echo $lang['aircraft']; ?>:</label>

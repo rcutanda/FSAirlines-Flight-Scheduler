@@ -3,7 +3,7 @@ return [
     // Page
     'page_title' => 'Calculadora de horarios para FSairlines',
     'title' => 'Calculadora de horarios para FSairlines',
-    'subtitle' => 'Calcula horas de salida aleatorias en zona UTC para FSAirlines dentro de un rango personalizada y su correspondiente hora de llegada',
+    'subtitle' => 'Calcula horas de salida aleatorias en zona UTC para FSAirlines (dentro de un rango personalizado) con su correspondiente hora de llegada',
     
     // Form Labels
     'departure_icao' => 'ICAO de Salida',
