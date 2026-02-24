@@ -1,6 +1,6 @@
 > [!TIP]
 > If you would like to provide any kind of **feedback**, please do so in the following **post in the forum**, thanks:  
-> https://forum.fsairlines.net/viewtopic.php?t=10424
+> [https://forum.fsairlines.net/viewtopic.php?t=10424](https://forum.fsairlines.net/viewtopic.php?t=10424)
 
 For details, please check the following section in the Wiki:
 
