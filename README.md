@@ -6,7 +6,7 @@ For details, please check the following sections in the Wiki:
 
 [0. Motivation for FSAirlines Flight Scheduler](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/0.-Motivation-for-FSAirlines-Flight-Scheduler)  
 [1. REQUIREMENTS and installation](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/1.-REQUIREMENTS-and-installation)  
-[2. How the scheduler works](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/2.-How-the-scheduler-works#234-ncepncar-reanalysis-1-global-atmospheric-dataset)  
+[2. How the scheduler works](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/2.-How-the-scheduler-works)  
 [3. Convenience features](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/3.-Convenience-features)  
 [4. What to expect from FSA Flight Scheduler regarding accuracy](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/4.-What-to-expect-from-FSA-Flight-Scheduler-regarding-accuracy)  
 [5. Credits](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/5.-Credits)  
