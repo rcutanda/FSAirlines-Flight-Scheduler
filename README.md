@@ -2,6 +2,15 @@
 > If you would like to provide any kind of **feedback**, please do so in the following **post in the forum**, thanks:  
 > https://forum.fsairlines.net/viewtopic.php?t=10424
 
+For details, please check the following section in the Wiki:
+
+[0. Motivation for FSAirlines Flight Scheduler](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/0.-Motivation-for-FSAirlines-Flight-Scheduler)  
+[1. REQUIREMENTS and installation](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/1.-REQUIREMENTS-and-installation)  
+[2. How the scheduler works](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/2.-How-the-scheduler-works#234-ncepncar-reanalysis-1-global-atmospheric-dataset)  
+[3. Convenience features](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/3.-Convenience-features)  
+[4. What to expect from FSA Flight Scheduler regarding accuracy](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/4.-What-to-expect-from-FSA-Flight-Scheduler-regarding-accuracy)  
+[5. Credits](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/5.-Credits)  
+
 This script is meant to **facilitate the creation of flight plans  in [FSAirlines Virtual Airlines Management System](https://www.fsairlines.net/)** by automatically providing **"reasonable" random departure times within a range of local times** selected by the user. The duration of the flight is then calculated and, finally, **departure and arrival times are provided in UTC**, as required by FSA.
 
 There are **two modes** of scheduling available: **charter**, for single, individual, isolated flights, and **daily schedule**, where an airplane is meant to start early in the day and concatenate a series of flights until its end while respecting a minimal turnover time for refuelling, disembarking and boarding. 
