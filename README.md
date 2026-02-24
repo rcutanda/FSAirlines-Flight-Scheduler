@@ -1,143 +1,28 @@
-> [!NOTE]
-> This script is meant to facilitate the creation of flight plans in [FSAirlines Virtual Airlines Management System](https://www.fsairlines.net/) by automatically providing "reasonable" random departure and arrival times in UTC within a range of a user selected local time at the departure airport.
-
 > [!TIP]
 > If you would like to provide any kind of **feedback**, please do so in the following **post in the forum**, thanks:  
 > https://forum.fsairlines.net/viewtopic.php?t=10424
 
-<img width="766" height="1279" alt="Screenshot_1" src="https://github.com/user-attachments/assets/6e41cc9d-3791-4c67-ae78-a73f2acf431c" />
-<img width="766" height="1237" alt="Screenshot_2" src="https://github.com/user-attachments/assets/b54749b8-24bc-4d40-96ff-04014c33fb79" />
-
-**Advanced options:**  
-<img width="766" height="534" alt="AdvancedOptions" src="https://github.com/user-attachments/assets/96f7ff4f-17cb-4a0b-aa07-4e3b649da8f1" />
-
-> [!WARNING]
-># 1. REQUIREMENTS:
->
->**1. A PHP-enabled web server or [PHP Desktop](https://github.com/cztomczak/phpdesktop).** Most FSA airlines will host a website to run the script online. Nevertheless, **the script can also be run locally on any computer (no server required) using PHP Desktop**. Just unzip the latest release of FSAirlines Flight Scheduler inside the **_www_ folder of the PHP Desktop package and run its executable**. Of course, it can also be run using XAMPP, WAMP, MAMP, or a similar PHP stack.
->
->**2. To update the 4th and 5th lines of the _index.php_ file to define your FSAirlines _API key_ and _Airline ID_**:
->
-><img width="1192" height="215" alt="AirlineID-APIKey" src="https://github.com/user-attachments/assets/d163d7e6-c0c0-4d7b-85a0-044b227a9840" />
-
-> [!TIP]
-> In Windows, you can edit php files with the default [Notepad](https://apps.microsoft.com/detail/9msmlrh6lzf3?hl=en-GB&gl=ES) or, even better, with [Notepad++](https://notepad-plus-plus.org/).
-> In macOS, you can use native [TextEdit](https://support.apple.com/en-gb/guide/textedit/welcome/mac) or the much more powerful [Sublime Text](https://www.sublimetext.com/).
-
-> [!TIP]
-> When [PHP Desktop](https://github.com/cztomczak/phpdesktop) is used to run the script in a local enviroment (ie, not uploaded into a web server), it is recommended to change the default size of PHP Desktop to 800x1300 in its settings.json file. Just use the same editors from the previous tip.
-> <img width="907" height="458" alt="PHPDesktopRecommendedSize" src="https://github.com/user-attachments/assets/15395e33-2815-4f5a-a6b8-5e809255fce0" />
-
-> [!NOTE]
-> You will find your **Airline ID in the Overview section** of your Airline:  
-https://www.fsairlines.net/crewcenter/index.php?status=va
->
-> <img width="510" height="719" alt="AirlineID" src="https://github.com/user-attachments/assets/25ede5bb-74df-401e-bbfd-a7b9d5027790" />
-
-> [!NOTE]
-> You can generate and find your API Key in **_Edit VA Settings → API Key Management_**:  
-> https://www.fsairlines.net/crewcenter/index.php?status=va_api_key
-> 
-> <img width="650" height="583" alt="WebsiteAPIKey" src="https://github.com/user-attachments/assets/9968026c-a9be-4f3f-a174-2bc1497970d2" />
->
-> <img width="730" height="563" alt="SiteKEY" src="https://github.com/user-attachments/assets/f45f737c-f9e4-4079-bcc6-55548a902e21" />
-
-> [!TIP]
-> **You will find more info about what an API Key can do here:**  
-> https://wiki.fsairlines.net/index.php/XML-Interface-v2
-***
-
-# 2. The motivation behind FSAirlines Flight Scheduler
-
-What I have always found most annoying when generating flight plans in FSA, is the calculation of departure and arrival times; especially when many new plans have to be entered in succession. First of all, one has to come up with varied departure times for each leg, which also need to be minimally realistic; most routes are not meant to be flown departing at 4 a.m. Secondly, unless one lives in Europe, calculating reasonable departure UTC times in distant time zones is not a straight forward process because you need to know the time difference between UTC time and the departure airport. There are many tools for that, but it is both irritating and time-consuming. 
-
-Regarding the arrival time, although tools like SimBrief generate flight plans with precise departure and arrival times,  having to calculate each route individually when introducing large batch of flight plans into FSA is a slow and tedious process that greatly slows everything down. Moreover, the flight plans generated with SimBrief are not a panacea, since winds can significantly alter the duration of the flight, especially on long-haul flights. My experience tells me that even if the duration of a route has been precisely calculated with SimBrief, in future flights it is difficult to meet the estimated flight time with precision.
-
-# 3. About the code
-
-I can more or less read and modify code, but I am completely unable to write code from scratch. For this project, I have used the code provided by Anthropic Claude Sonnet 4.5 and Open AI ChatGPT 5.2 as a base.
-
-# 4. Why FSAirlines Flight Scheduler exists as a Github repo?
-
-This FSA scheduler has far exceeded all my expectations, allowing me to calculate  departure and arrival times extremely quickly and with simplicity, with an error margin—in my opinion—more than reasonable. That's why I thought that other FSA airline admins may benefit from this tool, so I decided to share the code via this Github repository.
-
-# 5. The logic behind FSAirlines Flight Scheduler
-
-## 5.1 Asking FSAirlines for the coordinates of the ICAO code
-
-The scheduler **connects directly to FSAirlines** via your airline's API and airline ID to obtain the **coordinates** of the requested airport (ICAO code).
-
-> [!NOTE]
-> **ICAO codes used by MSFS and other simulators can be, at times, different from those used by FSA**. Although an airport in FSA may have several ICAO codes listed in its profile, only one can be active. For this reason, when an ICAO code introduced is different from that used in FSA (for example, UTTP or ZSJJ airports in MSFS 2024), the scheduler will not be able to find it via the FSA API. In such cases, an error message will be generated with a link that leads to the airpot's information page in FSA, where it will be possible to quickly see which is ICAO code in FSA is the equivalent to the one requested.
-> 
-> <img width="572" height="185" alt="ICAO-not-found" src="https://github.com/user-attachments/assets/5a10669d-5fcd-4b9e-afe7-6548f986ddc4" />
->
-> <img width="604" height="407" alt="MSFS-ICAO-FSA" src="https://github.com/user-attachments/assets/2f23b46c-7616-427e-8a0b-89805b9011f7" />
-
-## 5.2. Computing en route time
-
-Using the coordinates obtained from FSA, the **direct distance** (great circle route) between origin and destination is **calculated**. After that, using the **speed, cruise altitude, and ascend/descend rate and speed** specified in the form, the **en route time is computed**. 
-
-## 5.3 Default values
-
 > [!IMPORTANT]
-> **1. All the default values can be modified as per the user's needs or preferences**.
+> Check the **Wiki** for more details regarding:
 > 
-> **2. Custom values defined by the user are permanent; that's it, the user can set custom defaults.**
->
-> The user's preferences are saved using browser cookies and a preference file in the 'user_preferences' directory, which the server creates automatically.
->
-> **The button "Reset all" restores the default preferences**.
->
-> <img width="594" height="427" alt="ResetAll" src="https://github.com/user-attachments/assets/50cfc865-ca65-4112-bf69-c143fa28263e" />
+> [1. REQUIREMENTS and installation](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/1.-REQUIREMENTS-and-installation)  
+> [2. How the scheduler works](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/2.-How-the-scheduler-works)  
+> [3. Convenience features](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/3.-Convenience-features)  
+> [4. What to expect from FSA Flight Scheduler regarding accuracy](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/4.-What-to-expect-from-FSA-Flight-Scheduler-regarding-accuracy)  
+> [5. Credits](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/5.-Credits)  
 
-### 5.3.1 Default speed
+This script is meant to **facilitate the creation of flight plans  in [FSAirlines Virtual Airlines Management System](https://www.fsairlines.net/)** by automatically providing **"reasonable" random departure times within a range of local times** selected by the user. The duration of the flight is then calculated and, finally, **departure and arrival times are provided in UTC**, as required by FSA.
 
-**By default, Mach 0.8 is used for cruise speed**, which I have considered to be a typical average. During **climbs and descents**, the cruise speed is reduced to **250 knots when the speed is set to Mach and it is reduced to 175 knots when the speed is set to knots.**
+There are **two modes** of scheduling available: **charter**, for single, individual, isolated flights, and **daily schedule**, where an airplane is meant to start early in the day and concatenate a series of flights until its end while respecting a minimal turnover time for refuelling, disembarking and boarding. 
 
-For convenience, a **list of common commercial aircraft** has been added. The **cruise speeds** for each of the listed aircraft were obtained from **[Eurocontrol](https://learningzone.eurocontrol.int/ilp/customs/ATCPFDB/)**.
+Because **FSA Flight Scheduler is designed to generate all-year-round valid schedules**, it does not make use real-time weather for planning. It does use, nevertheless, an **simplified version of the [NCEP/NCAR Reanalysis 1 database](https://cliks.apcc21.org/dataset/ncep) with average winds from 1958 to 2008**. This database is used from FL 240 up to FL 450 and, with all its limitations, mitigates up to a reasonable point the enormous influence that jet streams have in the timing of routes (particularly long ones) affected by these streams.
 
-<img width="605" height="1069" alt="Aircraft-list" src="https://github.com/user-attachments/assets/39bb6baa-879c-435c-8d4e-51d189a0ab76" />   
+FSA Flight Scheduler also includes a **ready-to-use list of common aircrafts with unique performance profiles** for each of the **main phases of flight** that includes **speed** (in TAS and MACH, depending on the altitude) and **rate of climb/descent**. All these profiles have been gathered from **[Eurocontrol Aircraft Performance Database](https://learningzone.eurocontrol.int/ilp/customs/ATCPFDB/default.aspx?)**, and FSA Flight Scheduler includes a dedicated section to **automatically download and install new profiles**. Of course, each profile can be edited or deleted. **Manual generation of profiles** is also possible when necessary by manually filling in as many as the available fields as possible.
 
-### 5.3.2 Default altitudes
+The combination of weather and aircraft profiles provides FSAirlines Flight Scheduler with a **decent level of accuracy in timings** when compared against the average time taken by real-life routes. Check [4. What to expect from FSA Flight Scheduler regarding accuracy](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/4.-What-to-expect-from-FSA-Flight-Scheduler-regarding-accuracy) for more details regarding accuracy. 
 
-The **default altitudes are 35,000 feet for jet aircraft, and 24,000 feet for turbo propellers**.
+Because this tool has far exceeded all my expectations that I had before start writing a single line of code (both in terms of convenience and precision), I decided to create this repository and share its code, in case someone else may find it useful too.
 
-### 5.3.3 Default climb/descent rates
+<img alt="FSA Flight Scheduler screenshot" src="https://github.com/user-attachments/assets/4a165481-861a-425d-875f-c6c23faf99df" />
 
-**Default climb and descent rates are 1,800 feet per minute** for flights with speed indicated in Mach, and 800 feet per minute for flights with speed indicated in knots.
-
-## 5.4 Buffer time
-
-To make the calculated flight time by the scheduler more realistic, when Mach speed are used, **the script adds a 30-minute buffer** to the originally time calculated to compensate for the time spent taxiing at departure and arrival, deviations due to SID and STARS (especially when the runway in use for departure or arrival is in the opposite direction to the route), and the increase in distance due to the use of airways; since flights are never flown in a straight line as calculated by the script. As with other values, users can set their preferences. When the speed is selected in knots, the default buffer is reduced to 15 minutes.
-
-## 5.5 Use of a local reference time as a base for a random departure time selection
-
-To make the departure time both varied and realistic, the user selects a LOCAL reference departure time (07:00 by default) and a time range before and after that selection. By default, 90 minutes before and 15 hours after. The system will then select a random reparture time within that range and round it up to five minutes. To convert the selected local time into the actual UTC departure time, the free (at least for now) [timeapi.io API](https://www.timeapi.io/) is used.
-
-> [!NOTE]
-> As with other fields, both the reference time and the valid hour range are modifiable by the user.
-
-## 5.6 Main limitations of this scheduler
-
-The calculation of en route time with these parameters is, a priori, less precise than with SimBrief or similar tools because **winds and the increase in distance due to the use of airways are not being taken in**. However, as a trade-off, the calculation is infinitely faster and simpler, and I considered the error margin more than reasonable.
-
-## 5.7 Convenience features
-
-Once the departure time has been calculated, if the generated time is not to your liking, you can use the "**Recalculate Schedule**" button to calculate another random departure time —with the corresponding new arrival time— using the same parameters as before.
-
-The "**Next Leg**" button is one of my most beloved features, as it will use the current destination's ICAO code as departure for the next flight plan, making the calculation of the following route even faster and simpler.
-
-Finally, once the calculation is performed, **the ICAO codes of origin and destination can be copied by simply clicking on them with the mouse,** which simplifies the copying and pasting process. **The same applies to departure and arrival times**, which, in addition, are copied without the colon separator. That is, clicking on 10:45 copies 1045 to meet the format required for pasting into FSA.
-
-<img width="553" height="476" alt="Conveniences" src="https://github.com/user-attachments/assets/f0f841bc-3e6e-481f-8cb5-20bbd3e7e97c" />
-
-> [!TIP]
-> I hope other FSA airline admins will find this script useful. Do feel free to use and modify it as desired. I just ask to be credited. Enjoy!
-
-# 6. Credits
-
-* Flags by [Flags Icons](https://github.com/lipis/flag-icons)
-* [timeapi.io API](https://www.timeapi.io/)
-* Most of the code generated by [Anthropic Claude Sonnet 4.5](https://www.anthropic.com/news/claude-sonnet-4-5) and [Open AI ChatGPT 5.2](https://openai.com/index/introducing-gpt-5-2/).
-* Logo by [Gemini 2.5 Flash Image (Nano Banana)](https://aistudio.google.com/models/gemini-2-5-flash-image)
+<img alt="Signed error vs great-circle distance" src="https://github.com/user-attachments/assets/4528099b-fbe3-47ff-8121-dfa4fb3c7998" />
