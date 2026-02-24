@@ -33,7 +33,7 @@ The combination of weather and aircraft profiles provides FSAirlines Flight Sche
 
 Check [4. What to expect from FSA Flight Scheduler regarding accuracy](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/4.-What-to-expect-from-FSA-Flight-Scheduler-regarding-accuracy) for more details regarding accuracy. 
 
-Because this tool has far exceeded all my expectations that I had before start writing a single line of code (both in terms of convenience and precision), I decided to create this repository and share its code, in case someone else may find it useful too.
+Because this tool has far exceeded all the expectations that I had before start writing a single line of code (both in terms of convenience and precision), I decided to create this repository and share its code under a [MIT license](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/blob/main/LICENSE), so anyone is free to use and modify this tool. 
 
 <img alt="FSA Flight Scheduler screenshot" src="https://github.com/user-attachments/assets/4a165481-861a-425d-875f-c6c23faf99df" />
 
