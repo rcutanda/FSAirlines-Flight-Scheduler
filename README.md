@@ -38,3 +38,5 @@ Because this tool has far exceeded all the expectations that I had before start 
 <img alt="FSA Flight Scheduler screenshot" src="https://github.com/user-attachments/assets/4a165481-861a-425d-875f-c6c23faf99df" />
 
 <img alt="Error distribution" src="https://github.com/user-attachments/assets/e16f7e85-e106-429d-883c-6c93bb2a4133" />
+
+<img alt="Signed error vs great-circle distance" src="https://github.com/user-attachments/assets/b11421ef-61e7-4764-9701-02a6a7be1ae8" />
