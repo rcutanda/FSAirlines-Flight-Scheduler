@@ -17,19 +17,20 @@ There are **two modes** of scheduling available: **charter**, for single, indivi
 
 Because **FSA Flight Scheduler is designed to generate all-year-round valid schedules**, it does not make use of real-time weather for planning. It does use, nevertheless, a **simplified version of the [NCEP/NCAR Reanalysis 1 database](https://cliks.apcc21.org/dataset/ncep) with average winds from 1958 to 2008**. This database is used from FL 240 up to FL 450 and, with all its limitations, mitigates up to a reasonable point the enormous influence that jet streams have in the timing of routes (particularly long ones) affected by these streams.
 
-FSA Flight Scheduler also includes a **ready-to-use list of common aircrafts with unique performance profiles** for each of the **main phases of flight**. Prociles include **speed** (in TAS and MACH, depending on the altitude) and **rate of climb/descent**. All these profiles have been gathered from **[Eurocontrol Aircraft Performance Database](https://learningzone.eurocontrol.int/ilp/customs/ATCPFDB/default.aspx?)**, and FSA Flight Scheduler includes a dedicated section to **automatically download and install new profiles**. Of course, each profile can be edited or deleted. **Manual generation of profiles** is also possible when necessary by manually filling in as many as the available fields as possible.
+FSA Flight Scheduler also includes a **ready-to-use list of common aircrafts with unique performance profiles** for each of the **main phases of flight**. Profiles include **speed** (in TAS and MACH, depending on the altitude) and **rate of climb/descent**. All these profiles have been gathered from **[Eurocontrol Aircraft Performance Database](https://learningzone.eurocontrol.int/ilp/customs/ATCPFDB/default.aspx?)**, and FSA Flight Scheduler includes a dedicated section to **automatically download and install new profiles**. Of course, each profile can be edited or deleted. **Manual generation of profiles** is also possible when necessary by manually filling in as many as the available fields as possible.
 
 The combination of weather and aircraft profiles provides FSAirlines Flight Scheduler with a **decent level of accuracy in timings** when compared against the average time taken by real-life routes:
 
-**Mean error** (scheduler − real): -1.0 min (near-zero overall bias).  
-**Mean absolute error** (MAE): 10.2 min.  
-**Median absolute error**: 7 min.  
+**Mean error (scheduler − real):** +0.90 min
+**Mean absolute error (MAE):** 10.14 min
+**Median absolute error:** 8.00 min
 
-* 38% of routes within ±5 min  
-* 64% within ±10 min  
-* 77% within ±15 min  
-* 85% within ±20 min  
-* 96% within ±30 min  
+**Routes within threshold **(absolute error):
+±5 min: 40%
+±10 min: 55%
+±15 min: 78%
+±20 min: 85%
+±30 min: 95%
 
 Check [4. What to expect from FSA Flight Scheduler regarding accuracy](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/4.-What-to-expect-from-FSA-Flight-Scheduler-regarding-accuracy) for more details regarding accuracy. 
 
@@ -37,4 +38,5 @@ Because this tool has far exceeded all the expectations that I had before start 
 
 <img alt="FSA Flight Scheduler screenshot" src="https://github.com/user-attachments/assets/4a165481-861a-425d-875f-c6c23faf99df" />
 
-<img alt="Error distribution" src="https://github.com/user-attachments/assets/e16f7e85-e106-429d-883c-6c93bb2a4133" />
+<img alt="error_vs_distance" src="https://github.com/user-attachments/assets/49f87f9f-ca94-4270-896b-8c4652f2fcc6" />
+
