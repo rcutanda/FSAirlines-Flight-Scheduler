@@ -3,7 +3,7 @@ return [
     // Page
     'page_title' => 'FSAirlines Flight Scheduler',
     'title' => 'FSAirlines Flight Scheduler',
-    'subtitle' => 'Ver la <a href="https://github.com/rcutanda/FSAirlines-Flight-Scheduler" target="_blank" rel="noopener noreferrer">Wiki</a> (en inglés) para más detalles.',
+    'subtitle' => 'Ver la <a href="https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki" target="_blank" rel="noopener noreferrer">Wiki</a> (en inglés) para más detalles.',
 	'footer_credits' => '<p><strong>FSAirlines Flight Scheduler, por Ram&oacute;n Cutanda</strong></p><br>
 <p><strong>Dudas y comentarios:&nbsp;</strong><br><a href="https://forum.fsairlines.net/viewtopic.php?t=10424" target="_blank" rel="noopener noreferrer">https://forum.fsairlines.net/viewtopic.php?t=10424</a></p><br>
 <p><strong>C&oacute;digo fuente y descarga:<br></strong><a href="https://github.com/rcutanda/FSAirlines-Flight-Scheduler" target="_blank" rel="noopener">https://github.com/rcutanda/FSAirlines-Flight-Scheduler</a></p>',
