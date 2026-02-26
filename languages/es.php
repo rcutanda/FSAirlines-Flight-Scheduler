@@ -157,6 +157,7 @@ return [
     'error' => 'Error',
     'error_cruise_speed' => 'La velocidad de crucero debe ser mayor que 0.',
     'error_aircraft_data_invalid' => 'Hay un problema con el perfil de este avión: falta el techo de crucero o no es válido.',
+    'error_aircraft_profile_incomplete' => 'Hay un problema con el perfil de este avión: faltan datos esenciales de rendimiento o no son válidos.',
     'error_buffer_time' => 'Los tiempos de margen no pueden ser negativos.',
     'error_climb_rate' => 'Las tasas de ascenso/descenso deben ser mayores que 0.',
     'error_climb_speed' => 'La velocidad de ascenso/descenso debe ser mayor que 0.',

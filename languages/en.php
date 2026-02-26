@@ -157,6 +157,7 @@ return [
     'error' => 'Error',
     'error_cruise_speed' => 'Cruise speed must be greater than 0.',
     'error_aircraft_data_invalid' => 'Invalid aircraft profile: cruise ceiling missing or invalid.',
+    'error_aircraft_profile_incomplete' => 'Invalid aircraft profile: required performance fields are missing or invalid.',
     'error_buffer_time' => 'Buffer times cannot be negative.',
     'error_climb_rate' => 'Climb/descent rates must be greater than 0.',
     'error_climb_speed' => 'Climb/descent speed must be greater than 0.',

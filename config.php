@@ -3,7 +3,7 @@
 define('FSA_API_URL', 'http://www.fsairlines.net/va_interface2.php');
 define('FSA_VA_ID', 'ADD_HERE_YOUR_AIRLINE_ID');
 define('FSA_API_KEY', 'ADD_HERE_YOUR_API_KEY');
-define('VERSION', 'v2.0');
+define('VERSION', 'v2.0.1');
 
 /**
  * Single source of truth for ALL defaults used by PHP + templates + JS.
@@ -31,10 +31,10 @@ function fsa_defaults(): array {
         'turnaround_time' => '60',
 
         // Detour / route uplift anchors (percent)
-        'short_haul' => '20',
-        'medium_haul' => '10',
-        'long_haul' => '2.4',
-        'ultra_long_haul' => '2.1',
+        'short_haul' => '22',
+        'medium_haul' => '14',
+        'long_haul' => '3.5',
+        'ultra_long_haul' => '2.2',
 
         // Breakpoints for interpolation (NM)
         'haul_bp1_nm' => 540.0,
@@ -49,15 +49,15 @@ function fsa_defaults(): array {
         'cruise_range_corr_enabled' => '1',
 
         // Thresholds (NM) for cruiseRange bucketing (must be strictly increasing)
-        'cruise_range_thr1_nm' => '2000',
+        'cruise_range_thr1_nm' => '3000',
         'cruise_range_thr2_nm' => '6000',
         'cruise_range_thr3_nm' => '8000',
 
         // Percentage-point adjustments by cruiseRange bucket
         // Example: +1.5 means add 1.5 percentage points to the interpolated detour %
-        'cruise_range_pp_lt_thr1' => '-0.37',
-        'cruise_range_pp_thr1_thr2' => '0.15',
-        'cruise_range_pp_thr2_thr3' => '0.60',
-        'cruise_range_pp_ge_thr3' => '1.2',
+        'cruise_range_pp_lt_thr1' => '-0.10',
+        'cruise_range_pp_thr1_thr2' => '0.90',
+        'cruise_range_pp_thr2_thr3' => '1.10',
+        'cruise_range_pp_ge_thr3' => '1.30',
     ];
 }

@@ -39,6 +39,9 @@ function processFormSubmission($icao_dep, $icao_arr, $aircraft, $local_departure
         return [null, null];
     }
 
+    $dep_altitude_ft = (isset($dep_airport['altitude']) && $dep_airport['altitude'] !== null) ? (float)$dep_airport['altitude'] : 0.0;
+    $arr_altitude_ft = (isset($arr_airport['altitude']) && $arr_airport['altitude'] !== null) ? (float)$arr_airport['altitude'] : 0.0;
+
     $distance = calculateDistance($dep_airport['lat'], $dep_airport['lon'], $arr_airport['lat'], $arr_airport['lon']);
 
     if ($windClimo === null && $dep_airport && $arr_airport && $aircraft_data && !isset($_POST['wind_ignore'])) {
@@ -161,7 +164,9 @@ function processFormSubmission($icao_dep, $icao_arr, $aircraft, $local_departure
         $medium_haul,
         $long_haul,
         $ultra_long_haul,
-        $cruise_range_corr
+        $cruise_range_corr,
+        $arr_altitude_ft,
+        $dep_altitude_ft
     );
 
     $optimized_altitude = $calc_result['optimized_altitude'] ?? $cruise_altitude;
