@@ -20,7 +20,16 @@ function handleHttpRequest(array $lang, array $aircraft_list, ?array $windClimo 
     if (isset($req['schedule_new_day'])) {
         $req['icao_dep'] = $req['icao_arr'] ?? '';
         $req['icao_arr'] = '';
-        $req['local_departure_time'] = $DEF['local_departure_time'];
+
+        // Preserve user's saved default earliest departure time (if present) instead of hard-coded fallback
+        if (isset($req['local_departure_time_saved']) && $req['local_departure_time_saved'] !== '') {
+            $req['local_departure_time'] = (string)$req['local_departure_time_saved'];
+        } elseif (isset($req['local_departure_time']) && $req['local_departure_time'] !== '') {
+            $req['local_departure_time'] = (string)$req['local_departure_time'];
+        } else {
+            $req['local_departure_time'] = $DEF['local_departure_time'];
+        }
+
         $req['latest_departure_time'] = $DEF['latest_departure_time'];
         $req['flight_mode'] = 'daily_schedule';
         $req['minutes_before_departure'] = $DEF['minutes_before_departure'];
@@ -65,7 +74,9 @@ function handleHttpRequest(array $lang, array $aircraft_list, ?array $windClimo 
         ? (string)$req['saved_default_dep_time']
         : ((isset($req['local_departure_time_saved']) && $req['local_departure_time_saved'] !== '')
             ? (string)$req['local_departure_time_saved']
-            : $DEF['local_departure_time']);
+            : ((isset($req['local_departure_time']) && $req['local_departure_time'] !== '')
+                ? (string)$req['local_departure_time']
+                : $DEF['local_departure_time']));
 
     $latest_departure_time = $req['latest_departure_time'] ?? $DEF['latest_departure_time'];
 
@@ -249,8 +260,9 @@ function handleHttpRequest(array $lang, array $aircraft_list, ?array $windClimo 
         }
 
         if (isset($req['schedule_new_day_mode'])) {
-            $local_departure_time = $DEF['local_departure_time'];
-            $latest_departure_time = $DEF['latest_departure_time'];
+            // Keep user's saved/default baseline instead of hard-coded defaults
+            $local_departure_time = $baseline_local_departure_time;
+            $latest_departure_time = $baseline_latest_departure_time;
             $flight_mode = 'daily_schedule';
 
         } elseif (

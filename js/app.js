@@ -222,6 +222,19 @@
         aircraftSelect.value = prefAircraft;
       }
     }
+
+    // Keep hidden "saved default" in sync so PHP can use it as baseline (even if user saved earlier)
+    try {
+      const savedField = document.getElementById('local_departure_time_saved');
+      const modeNow = document.getElementById('flight_mode')?.value || 'charter';
+      const defaultDep = (modeNow === 'daily_schedule')
+        ? (prefs.local_departure_time_daily_schedule ?? prefs.local_departure_time ?? DEFAULT_PREFERENCES.local_departure_time ?? '07:00')
+        : (prefs.local_departure_time_charter ?? prefs.local_departure_time ?? DEFAULT_PREFERENCES.local_departure_time ?? '07:00');
+
+      if (savedField && defaultDep !== '' && defaultDep !== null && defaultDep !== undefined) {
+        savedField.value = String(defaultDep);
+      }
+    } catch (e) {}
   }
 
 function validateIcaoFields() {
