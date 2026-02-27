@@ -3,7 +3,7 @@
 define('FSA_API_URL', 'http://www.fsairlines.net/va_interface2.php');
 define('FSA_VA_ID', 'ADD_HERE_YOUR_AIRLINE_ID');
 define('FSA_API_KEY', 'ADD_HERE_YOUR_API_KEY');
-define('VERSION', 'v2.0.3');
+define('VERSION', 'v2.0.2');
 
 /**
  * Single source of truth for ALL defaults used by PHP + templates + JS.
@@ -62,3 +62,4 @@ function fsa_defaults(): array {
     ];
 
 }
+
