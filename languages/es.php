@@ -185,6 +185,8 @@ return [
 	'error_eurocontrol_fetch' => 'No se han podido obtener los datos de Eurocontrol.',
 	'timezone_api_warning_title' => 'Problema de Conexión con el Servidor de Zona Horaria',
 	'timezone_api_warning_message' => 'No ha sido posible conectar con el servidor encargado de la conversión horaria. Por favor, <b>usa el botón «Recalcular Horas»</b> para volver a intentarlo',
+	'timezone_lookup_failed_message' => 'No se ha podido determinar la zona horaria (han fallado el proveedor principal y el de respaldo). Selecciona una zona horaria manualmente para continuar.',
+	'unknown_location' => 'Ubicación desconocida',
     'config_warning' => '<p><strong>⚠️ ERROR DE CONFIGURACIÓN:</strong> Verifica que tu archivo <code>config.php</code> esté configurado con tu identificador de aerolínea y clave API activa. Aunque está en inglés, puedes revisar el apartado <a href="https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/1.-REQUIREMENTS-and-installation" target="_blank" rel="noopener noreferrer">1. REQUIREMENTS</a> de la Wiki.</p>',
 	'error_haul_percentage' => 'Por favor, introduce el valor del porcentaje de distancia a añadir.',
 	'wind_db_missing_continue_no_wind' => 'La base de datos de viento no está disponible o no es válida. ¿Quieres continuar SIN corrección de viento?',

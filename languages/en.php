@@ -185,6 +185,8 @@ return [
     'error_eurocontrol_fetch' => 'Unable to fetch the data from Eurocontrol',
 	'timezone_api_warning_title' => 'Connection Problem with Timezone Server',
 	'timezone_api_warning_message' => 'There was a connection problem with the server in charge of making the timezone conversion. Please, <b>use the "Recalculate Schedule"</b> button to try again.',
+	'timezone_lookup_failed_message' => 'Timezone lookup failed (both primary and backup providers). Select a timezone manually to continue.',
+	'unknown_location' => 'Unknown location',
     'config_warning' => '<p><strong>⚠️ CONFIGURATION ERROR:</strong> Make sure that your <code>config.php</code> file includes your airline ID and active API key. Check section <a href="https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/1.-REQUIREMENTS-and-installation" target="_blank">1. REQUIREMENTS</a> in the Wiki if you need help.</p>',
     'error_haul_percentage' => 'Please, introduce the value of the percentage of distance to add.',
 	'wind_db_missing_continue_no_wind' => 'The wind database is missing or invalid. Do you want to continue WITHOUT wind correction?',

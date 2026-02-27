@@ -1,6 +1,27 @@
 <?php
 
 $aircraft_list = [
+	'1. CESSNA 310 (C310)' => array (
+  'type' => 'knots',
+  'initialClimbIAS' => 125,
+  'initialClimbROC' => 1000,
+  'climb150IAS' => 125,
+  'climb150ROC' => 800,
+  'climb240IAS' => 125,
+  'climb240ROC' => 600,
+  'machClimbMACH' => NULL,
+  'machClimbROC' => NULL,
+  'cruiseTAS' => 180,
+  'cruiseMACH' => NULL,
+  'cruiseCeiling' => 180,
+  'cruiseRange' => 900,
+  'initialDescentMACH' => NULL,
+  'initialDescentROD' => NULL,
+  'descentIAS' => 150,
+  'descentROD' => 800,
+  'approachIAS' => 130,
+  'approachROD' => 500,
+),
 	'AIRBUS A220-100 (BCS1)' => array (
   'type' => 'mach',
   'initialClimbIAS' => 165,

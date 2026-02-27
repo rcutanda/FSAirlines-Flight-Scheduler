@@ -45,6 +45,8 @@ function getAirportData($icao) {
                 'lat' => floatval($attrs['lat']),
                 'lon' => floatval($attrs['lon']),
                 'name' => (string)$attrs['name'],
+                'city' => isset($attrs['city']) ? (string)$attrs['city'] : null,
+                'country' => isset($attrs['country']) ? (string)$attrs['country'] : null,
                 // Altitude is returned only if the API provides it in the response attributes.
                 'altitude' => isset($attrs['altitude']) ? floatval($attrs['altitude']) : null
             ]];

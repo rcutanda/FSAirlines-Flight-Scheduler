@@ -1,5 +1,25 @@
 <?php
+
+// fsa_tz_debug is declared later (after strict_types)
 declare(strict_types=1);
+
+function fsa_tz_debug($label, $data = null) {
+    // Enable/disable quickly
+    if (!defined('FSA_TZ_DEBUG')) {
+        define('FSA_TZ_DEBUG', true);
+    }
+    if (!FSA_TZ_DEBUG) return;
+
+    $msg = '[FSA_TZ_DEBUG] ' . $label;
+    if ($data !== null) {
+        if (is_array($data) || is_object($data)) {
+            $msg .= ' ' . json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        } else {
+            $msg .= ' ' . (string)$data;
+        }
+    }
+    error_log($msg);
+}
 
 // Function to process form submission
 function processFormSubmission($icao_dep, $icao_arr, $aircraft, $local_departure_time, $flight_mode, $latest_departure_time, $minutes_before, $hours_after, $buffer_time_knots, $buffer_time_mach, $is_next_leg, $next_leg_departure_time, $lang, $aircraft_list, $windClimo = null, $short_haul, $medium_haul, $long_haul, $ultra_long_haul, $cruise_range_corr = null) {
@@ -193,8 +213,19 @@ function processFormSubmission($icao_dep, $icao_arr, $aircraft, $local_departure
         $flight_time,
         $buffer_time,
         $arr_airport['lat'], $arr_airport['lon'],
-        $lang
+        $lang,
+        $dep_airport['city'] ?? null,
+        $dep_airport['country'] ?? null,
+        $arr_airport['city'] ?? null,
+        $arr_airport['country'] ?? null
     );
+
+    if (!empty($tz_result['manual_timezone_required'])) {
+        return [[
+            'manual_timezone_required' => true,
+            'manual_timezone_context' => $tz_result['manual_timezone_context'] ?? null
+        ], null];
+    }
 
     if ($tz_result['error']) {
         return [null, $tz_result['error']];
@@ -332,19 +363,212 @@ function buildAirportErrors($dep_data, $arr_data, $icao_dep, $icao_arr, $lang) {
     }
 }
 
-function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_next_leg, $next_leg_departure_time, $minutes_before, $hours_after, $flight_mode, $latest_departure_time, $flight_time, $buffer_time, $arr_lat, $arr_lon, $lang) {
-    $tz_info = getTimezoneFromCoordinates($dep_lat, $dep_lon);
+function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_next_leg, $next_leg_departure_time, $minutes_before, $hours_after, $flight_mode, $latest_departure_time, $flight_time, $buffer_time, $arr_lat, $arr_lon, $lang, $dep_city = null, $dep_country = null, $arr_city = null, $arr_country = null) {
+
     $error = null;
 
-    if (!$tz_info || !isset($tz_info['timezone']) || $tz_info['timezone'] === '' || $tz_info['timezone'] === 'UTC') {
-        $error = $lang['error_time_conversion'];
-        return ['error' => $error];
+    $manual_timezone = isset($_POST['manual_timezone']) ? trim((string)$_POST['manual_timezone']) : '';
+    $manual_timezone_for = isset($_POST['manual_timezone_for']) ? trim((string)$_POST['manual_timezone_for']) : '';
+
+    $is_valid_manual_timezone = false;
+    if ($manual_timezone !== '') {
+        $is_valid_manual_timezone = in_array($manual_timezone, timezone_identifiers_list(), true);
+    }
+
+     $buildManualContext = function($for, $city, $country) use ($manual_timezone, $manual_timezone_for, $lang) {
+        $city_str = is_string($city) ? trim($city) : '';
+        $country_str = is_string($country) ? trim($country) : '';
+
+        $heading = '';
+        if ($city_str !== '' && $country_str !== '') {
+            $heading = $city_str . ', ' . $country_str;
+        } elseif ($city_str !== '') {
+            $heading = $city_str;
+        } elseif ($country_str !== '') {
+            $heading = $country_str;
+        } else {
+            $heading = (string)($lang['unknown_location'] ?? '');
+        }
+
+        // URLs requested by you
+        $city_path = rawurlencode(trim($city_str));
+        $country_path = rawurlencode(trim($country_str));
+
+        $time_is_url = 'https://time.is/';
+        if ($city_path !== '') {
+            $time_is_url .= $city_path;
+        }
+        $time_is_url .= '#time_zone';
+
+        $time_24tz_url = 'https://24timezones.com/';
+        if ($country_path !== '') {
+            $time_24tz_url .= $country_path . '/time';
+        }
+
+        // Auto-detect IANA timezone by reading https://time.is/<City> HTML source and extracting:
+        // "The IANA time zone identifier for <City> is <TZ>."
+        $auto_tz = '';
+
+        $cache_key = $city_str;
+        if ($cache_key !== '' && session_status() === PHP_SESSION_ACTIVE) {
+            if (isset($_SESSION['timeis_tz_cache']) && is_array($_SESSION['timeis_tz_cache'])) {
+                if (isset($_SESSION['timeis_tz_cache'][$cache_key]) && is_string($_SESSION['timeis_tz_cache'][$cache_key])) {
+                    $auto_tz = trim($_SESSION['timeis_tz_cache'][$cache_key]);
+                }
+            }
+        }
+
+        if ($auto_tz === '' && $city_str !== '') {
+            $url = 'https://time.is/' . rawurlencode($city_str);
+
+            fsa_tz_debug('timeis.fetch.start', [
+                'city' => $city_str,
+                'url' => $url
+            ]);
+
+            $html = null;
+
+            if (function_exists('curl_init')) {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+                curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+                curl_setopt($ch, CURLOPT_ENCODING, '');
+                $html = curl_exec($ch);
+                curl_close($ch);
+            } else {
+                $ctx = stream_context_create([
+                    'http' => [
+                        'method' => 'GET',
+                        'timeout' => 6,
+                        'header' => "User-Agent: Mozilla/5.0\r\n"
+                    ]
+                ]);
+                $html = @file_get_contents($url, false, $ctx);
+            }
+
+            fsa_tz_debug('timeis.fetch.result', [
+                'city' => $city_str,
+                'html_is_string' => is_string($html),
+                'html_len' => is_string($html) ? strlen($html) : 0
+            ]);
+
+            if (is_string($html) && $html !== '') {
+
+                // Extract timezone using language-independent key: zone_id='Europe/Kyiv'
+                $m = [];
+                $matched = preg_match("/zone_id=['\"]([A-Za-z0-9_+\/-]+)['\"]/", $html, $m);
+
+                fsa_tz_debug('timeis.extract.zone_id.match', [
+                    'city' => $city_str,
+                    'matched' => (bool)$matched
+                ]);
+
+                if ($matched) {
+
+                    $candidate = trim((string)$m[1]);
+
+                    fsa_tz_debug('timeis.extract.zone_id.candidate', [
+                        'city' => $city_str,
+                        'candidate' => $candidate
+                    ]);
+
+                    // Alias mapping for older tzdata/PHP installs
+                    $aliases = [
+                        'Europe/Kyiv' => 'Europe/Kiev'
+                    ];
+
+                    if ($candidate !== '' && isset($aliases[$candidate])) {
+                        $candidate = (string)$aliases[$candidate];
+                    }
+
+                    $tz_list = timezone_identifiers_list();
+
+                    // 1) Exact match
+                    if ($candidate !== '' && in_array($candidate, $tz_list, true)) {
+                        $auto_tz = $candidate;
+                    } else {
+
+                        // 2) Closest match: longest prefix match (e.g., "Europe/Kyiv" -> "Europe/Kiev" or "Europe/K")
+                        // We try decreasing prefixes down to a minimum length, and pick the first timezone that starts with it.
+                        $min_prefix_len = 8; // avoids extremely broad matches like "E"
+                        $best = '';
+
+                        if ($candidate !== '') {
+                            for ($len = strlen($candidate); $len >= $min_prefix_len; $len--) {
+                                $prefix = substr($candidate, 0, $len);
+                                foreach ($tz_list as $tz_name) {
+                                    if (strpos($tz_name, $prefix) === 0) {
+                                        $best = $tz_name;
+                                        break 2;
+                                    }
+                                }
+                            }
+                        }
+
+                        if ($best !== '') {
+                            $auto_tz = $best;
+                        }
+                    }
+
+                    if ($auto_tz !== '' && $cache_key !== '' && session_status() === PHP_SESSION_ACTIVE) {
+                        if (!isset($_SESSION['timeis_tz_cache']) || !is_array($_SESSION['timeis_tz_cache'])) {
+                            $_SESSION['timeis_tz_cache'] = [];
+                        }
+                        $_SESSION['timeis_tz_cache'][$cache_key] = $auto_tz;
+                    }
+                }
+            }
+        }
+
+        $prefill = '';
+        if ($manual_timezone_for === $for && $manual_timezone !== '') {
+            $prefill = $manual_timezone;
+        } elseif ($auto_tz !== '') {
+            $prefill = $auto_tz;
+        }
+
+        return [
+            'manual_timezone_for' => $for,
+            'heading' => $heading,
+            'city' => $city_str,
+            'country' => $country_str,
+            'time_is_url' => $time_is_url,
+            'time_24tz_url' => $time_24tz_url,
+            'prefill_timezone' => $prefill
+        ];
+    };
+
+    $tz_info = getTimezoneFromCoordinates($dep_lat, $dep_lon);
+
+    if ($is_valid_manual_timezone && $manual_timezone_for === 'dep') {
+        $tz_info = ['timezone' => $manual_timezone];
+    }
+
+    if (!$tz_info || !isset($tz_info['timezone']) || $tz_info['timezone'] === '') {
+        return [
+            'error' => null,
+            'manual_timezone_required' => true,
+            'manual_timezone_context' => $buildManualContext('dep', $dep_city, $dep_country)
+        ];
     }
 
     $tz_info_arr = getTimezoneFromCoordinates($arr_lat, $arr_lon);
-    if (!$tz_info_arr || !isset($tz_info_arr['timezone']) || $tz_info_arr['timezone'] === '' || $tz_info_arr['timezone'] === 'UTC') {
-        $error = $lang['error_time_conversion'];
-        return ['error' => $error];
+
+    if ($is_valid_manual_timezone && $manual_timezone_for === 'arr') {
+        $tz_info_arr = ['timezone' => $manual_timezone];
+    }
+
+    if (!$tz_info_arr || !isset($tz_info_arr['timezone']) || $tz_info_arr['timezone'] === '') {
+        return [
+            'error' => null,
+            'manual_timezone_required' => true,
+            'manual_timezone_context' => $buildManualContext('arr', $arr_city, $arr_country)
+        ];
     }
 
     $timezone_warning = false;
@@ -353,8 +577,11 @@ function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_n
     $utc_departure_time = convertLocalTimeToUTC($user_local_time, $tz_info['timezone']);
 
     if (!$utc_departure_time) {
-        $error = $lang['error_time_conversion'];
-        return ['error' => $error];
+        return [
+            'error' => null,
+            'manual_timezone_required' => true,
+            'manual_timezone_context' => $buildManualContext('dep', $dep_city, $dep_country)
+        ];
     }
 
     $total_time = $flight_time + $buffer_time;
@@ -369,8 +596,17 @@ function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_n
     }
 
     if (!$departure_time || !preg_match('/^(\d{1,2}):(\d{2})$/', $departure_time)) {
-        $error = $lang['error_time_conversion'];
-        return ['error' => $error];
+
+        if ($is_valid_manual_timezone && $manual_timezone_for === 'dep') {
+            $error = $lang['error_time_conversion'];
+            return ['error' => $error];
+        }
+
+        return [
+            'error' => null,
+            'manual_timezone_required' => true,
+            'manual_timezone_context' => $buildManualContext('dep', $dep_city, $dep_country)
+        ];
     }
 
     $arrival_time_raw = addMinutesToTime($departure_time, $total_time);
@@ -388,12 +624,30 @@ function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_n
         $local_departure_time_randomized = $dateTime->format('H:i');
 
         if ($local_departure_time_randomized === false || strpos($local_departure_time_randomized, '-') !== false) {
+
+            if ($is_valid_manual_timezone && $manual_timezone_for === 'dep') {
+                $error = $lang['error_time_conversion'];
+                return ['error' => $error];
+            }
+
+            return [
+                'error' => null,
+                'manual_timezone_required' => true,
+                'manual_timezone_context' => $buildManualContext('dep', $dep_city, $dep_country)
+            ];
+        }
+    } catch (Exception $e) {
+
+        if ($is_valid_manual_timezone && $manual_timezone_for === 'dep') {
             $error = $lang['error_time_conversion'];
             return ['error' => $error];
         }
-    } catch (Exception $e) {
-        $error = $lang['error_time_conversion'];
-        return ['error' => $error];
+
+        return [
+            'error' => null,
+            'manual_timezone_required' => true,
+            'manual_timezone_context' => $buildManualContext('dep', $dep_city, $dep_country)
+        ];
     }
 
     // Convert UTC arrival time to local time for display
@@ -408,12 +662,30 @@ function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_n
         $local_arrival_time = $arrDateTime->format('H:i');
 
         if ($local_arrival_time === false || strpos($local_arrival_time, '-') !== false) {
+
+            if ($is_valid_manual_timezone && $manual_timezone_for === 'arr') {
+                $error = $lang['error_time_conversion'];
+                return ['error' => $error];
+            }
+
+            return [
+                'error' => null,
+                'manual_timezone_required' => true,
+                'manual_timezone_context' => $buildManualContext('arr', $arr_city, $arr_country)
+            ];
+        }
+    } catch (Exception $e) {
+
+        if ($is_valid_manual_timezone && $manual_timezone_for === 'arr') {
             $error = $lang['error_time_conversion'];
             return ['error' => $error];
         }
-    } catch (Exception $e) {
-        $error = $lang['error_time_conversion'];
-        return ['error' => $error];
+
+        return [
+            'error' => null,
+            'manual_timezone_required' => true,
+            'manual_timezone_context' => $buildManualContext('arr', $arr_city, $arr_country)
+        ];
     }
 
     $new_day_triggered = false;

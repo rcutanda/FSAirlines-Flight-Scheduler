@@ -565,6 +565,94 @@ button:active {
     margin-left: 4px;
 }
 
+.manual-tz-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.manual-tz-modal {
+    background: #fff;
+    width: 100%;
+    max-width: 640px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    overflow: hidden;
+}
+
+.manual-tz-header {
+    padding: 16px 18px;
+    background: #fff3cd;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    color: #856404;
+}
+
+.manual-tz-title {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.manual-tz-body {
+    padding: 18px;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.manual-tz-location {
+    margin: 0 0 8px 0;
+    font-weight: 700;
+    font-size: 18px;
+    color: #333;
+}
+
+.manual-tz-link {
+    margin-bottom: 12px;
+}
+
+.manual-tz-label {
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.manual-tz-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 8px;
+}
+
+.manual-tz-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 0 18px 18px 18px;
+}
+
+.manual-tz-btn {
+    width: auto;
+    margin-top: 0;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.manual-tz-btn-cancel {
+    background: #e53e3e;
+}
+
+.manual-tz-btn-accept {
+    background: #48bb78;
+}
+
 @media (max-width: 600px) {
     .turnaround-time-form {
         grid-template-columns: 1fr;

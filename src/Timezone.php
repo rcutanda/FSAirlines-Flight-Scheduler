@@ -42,7 +42,7 @@ function getTimezoneFromCoordinates($lat, $lon) {
             }
 
             // Only return if we have a valid timezone name
-            if ($timezone !== null && $timezone !== '' && $timezone !== 'UTC') {
+            if ($timezone !== null && $timezone !== '') {
                 return [
                     'timezone' => $timezone
                 ];
@@ -59,13 +59,26 @@ function getTimezoneFromCoordinates($lat, $lon) {
 // Function to convert local time to UTC time
 function convertLocalTimeToUTC($localTime, $timezone) {
     try {
-        $tz = new DateTimeZone($timezone);
+
+        $localTimeStr = trim((string)$localTime);
+        $timezoneStr = trim((string)$timezone);
+
+        // If timezone is UTC (or equivalent), return the provided time without conversion.
+        if ($timezoneStr === 'UTC' || $timezoneStr === 'Etc/UTC' || $timezoneStr === 'Etc/GMT') {
+            if (preg_match('/^(\d{1,2}):(\d{2})$/', $localTimeStr, $m)) {
+                $h = str_pad((string)intval($m[1]), 2, '0', STR_PAD_LEFT);
+                $min = str_pad((string)intval($m[2]), 2, '0', STR_PAD_LEFT);
+                return $h . ':' . $min;
+            }
+        }
+
+        $tz = new DateTimeZone($timezoneStr);
 
         // If only HH:MM is provided, keep legacy behavior (assumes today's date).
         // If a date is included (YYYY-MM-DD HH:MM), DST is handled correctly for that date.
-        $dateTime = DateTime::createFromFormat('H:i', (string)$localTime, $tz);
+        $dateTime = DateTime::createFromFormat('H:i', $localTimeStr, $tz);
         if (!$dateTime) {
-            $dateTime = new DateTime((string)$localTime, $tz);
+            $dateTime = new DateTime($localTimeStr, $tz);
         }
 
         $utcTz = new DateTimeZone('UTC');

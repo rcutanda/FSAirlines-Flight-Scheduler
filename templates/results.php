@@ -32,6 +32,135 @@
 
 <?php if ($result): ?>
     <div class="result-box" id="resultsSection">
+
+        <?php if (!empty($result['manual_timezone_required']) && !empty($result['manual_timezone_context']) && is_array($result['manual_timezone_context'])): ?>
+            <?php
+                $ctx = $result['manual_timezone_context'];
+                $heading = (string)($ctx['heading'] ?? 'Unknown location');
+                $time_is_url = (string)($ctx['time_is_url'] ?? 'https://time.is/#time_zone');
+                $time_24tz_url = (string)($ctx['time_24tz_url'] ?? 'https://24timezones.com/');
+                $manual_for = (string)($ctx['manual_timezone_for'] ?? 'dep');
+                $prefill = (string)($ctx['prefill_timezone'] ?? '');
+            ?>
+
+            <?php
+                $form = "<form id='manualTimezoneForm' method='post' action='" . htmlspecialchars((string)($_SERVER['REQUEST_URI'] ?? '')) . "'>"
+                      . "<input type='hidden' name='manual_timezone_for' value='" . htmlspecialchars($manual_for) . "'>";
+
+                foreach ((array)$_POST as $k => $v) {
+                    if ($k === 'manual_timezone' || $k === 'manual_timezone_for') continue;
+                    if (is_array($v)) continue;
+                    $form .= "<input type='hidden' name='" . htmlspecialchars((string)$k) . "' value='" . htmlspecialchars((string)$v) . "'>";
+                }
+
+                $form .= "</form>";
+
+                echo $form;
+            ?>
+
+            <div id='manualTimezoneModalBackdrop' class='manual-tz-backdrop'>
+                <div class='manual-tz-modal'>
+                    <div class='manual-tz-header'>
+                        <div class='manual-tz-title'>⚠️ <?php echo htmlspecialchars((string)($lang['note'] ?? 'NOTE')); ?></div>
+                    </div>
+
+                    <div class='manual-tz-body'>
+                        <p style="margin-top:0;">
+                            <?php echo htmlspecialchars((string)($lang['timezone_lookup_failed_message'] ?? '')); ?>
+                        </p>
+
+                        <h3 class='manual-tz-location'><?php echo htmlspecialchars($heading); ?></h3>
+
+                        <div class='manual-tz-link'>
+                            <a href="<?php echo htmlspecialchars($time_is_url); ?>" target="_blank" rel="noopener noreferrer">
+                                <?php echo htmlspecialchars($time_is_url); ?>
+                            </a>
+                        </div>
+
+                        <div class='manual-tz-link'>
+                            <a href="<?php echo htmlspecialchars($time_24tz_url); ?>" target="_blank" rel="noopener noreferrer">
+                                <?php echo htmlspecialchars($time_24tz_url); ?>
+                            </a>
+                        </div>
+
+                        <div class='manual-tz-label'>
+                            <?php echo htmlspecialchars((string)($lang['timezone'] ?? 'Timezone')); ?>
+                        </div>
+
+                        <select id="manual_timezone_select" class="manual-tz-select">
+                            <?php
+                                $tz_list = timezone_identifiers_list();
+                                foreach ($tz_list as $tz_name) {
+                                    $sel = ($prefill !== '' && $tz_name === $prefill) ? ' selected' : '';
+                                    echo "<option value=\"" . htmlspecialchars($tz_name) . "\"" . $sel . ">" . htmlspecialchars($tz_name) . "</option>";
+                                }
+                            ?>
+                        </select>
+                    </div>
+
+                    <div class='manual-tz-actions'>
+                        <button type='button' id='manualTimezoneCancelBtn' class='manual-tz-btn manual-tz-btn-cancel'>
+                            <?php echo htmlspecialchars((string)($lang['cancel'] ?? 'Cancel')); ?>
+                        </button>
+                        <button type='button' id='manualTimezoneAcceptBtn' class='manual-tz-btn manual-tz-btn-accept'>
+                            <?php echo htmlspecialchars((string)($lang['accept'] ?? 'Accept')); ?>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                (function () {
+                    var acceptBtn = document.getElementById('manualTimezoneAcceptBtn');
+                    var cancelBtn = document.getElementById('manualTimezoneCancelBtn');
+                    var backdrop  = document.getElementById('manualTimezoneModalBackdrop');
+                    var form      = document.getElementById('manualTimezoneForm');
+                    var sel       = document.getElementById('manual_timezone_select');
+
+                    function closeModal() {
+                        if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+                    }
+
+                    if (acceptBtn) {
+                        acceptBtn.addEventListener('click', function () {
+                            if (form && sel) {
+                                var input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'manual_timezone';
+                                input.value = sel.value || '';
+                                form.appendChild(input);
+                                form.submit();
+                            }
+                        });
+                    }
+
+                    if (cancelBtn) {
+                        cancelBtn.addEventListener('click', function () {
+                            closeModal();
+                            window.location.href = '?jump=top';
+                        });
+                    }
+
+                    if (backdrop) {
+                        backdrop.addEventListener('click', function (e) {
+                            if (e && e.target === backdrop) {
+                                closeModal();
+                                window.location.href = '?jump=top';
+                            }
+                        });
+                    }
+
+                    document.addEventListener('keydown', function (e) {
+                        if (e && e.key === 'Escape') {
+                            closeModal();
+                            window.location.href = '?jump=top';
+                        }
+                    });
+                })();
+            </script>
+
+            <?php return; ?>
+        <?php endif; ?>
         <?php if ($result['new_day_warning']): ?>
             <div style="margin-bottom: 20px; padding: 12px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px; color: #856404; font-size: 13px;">
                 <strong>⚠️ <?php echo $lang['note']; ?>:</strong> <?php echo nl2br(htmlspecialchars((string)$result['new_day_warning'])); ?>
