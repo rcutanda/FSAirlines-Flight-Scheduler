@@ -21,15 +21,16 @@ FSA Flight Scheduler also includes a **ready-to-use list of common aircrafts wit
 
 The combination of weather and aircraft profiles provides FSAirlines Flight Scheduler with a **decent level of accuracy in timings** when compared against the average time taken by real-life routes:
 
-**Mean error** (scheduler − real): -1.0 min (near-zero overall bias).  
-**Mean absolute error** (MAE): 10.2 min.  
-**Median absolute error**: 7 min.  
+**Mean error (scheduler − real)**: +0.90 min
+**Mean absolute error (MAE)**: 10.14 min
+**Median absolute error**: 8.00 min
 
-* 38% of routes within ±5 min  
-* 64% within ±10 min  
-* 77% within ±15 min  
-* 85% within ±20 min  
-* 96% within ±30 min  
+**Routes within threshold (absolute error)**:
+±5 min: 40%
+±10 min: 55%
+±15 min: 78%
+±20 min: 85%
+±30 min: 95%
 
 Check [4. What to expect from FSA Flight Scheduler regarding accuracy](https://github.com/rcutanda/FSAirlines-Flight-Scheduler/wiki/4.-What-to-expect-from-FSA-Flight-Scheduler-regarding-accuracy) for more details regarding accuracy. 
 
