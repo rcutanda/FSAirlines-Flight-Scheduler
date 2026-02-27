@@ -60,6 +60,4 @@ function fsa_defaults(): array {
         'cruise_range_pp_thr2_thr3' => '1.10',
         'cruise_range_pp_ge_thr3' => '1.30',
     ];
-
 }
-
