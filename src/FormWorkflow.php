@@ -1,25 +1,6 @@
 <?php
 
-// fsa_tz_debug is declared later (after strict_types)
 declare(strict_types=1);
-
-function fsa_tz_debug($label, $data = null) {
-    // Enable/disable quickly
-    if (!defined('FSA_TZ_DEBUG')) {
-        define('FSA_TZ_DEBUG', true);
-    }
-    if (!FSA_TZ_DEBUG) return;
-
-    $msg = '[FSA_TZ_DEBUG] ' . $label;
-    if ($data !== null) {
-        if (is_array($data) || is_object($data)) {
-            $msg .= ' ' . json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        } else {
-            $msg .= ' ' . (string)$data;
-        }
-    }
-    error_log($msg);
-}
 
 // Function to process form submission
 function processFormSubmission($icao_dep, $icao_arr, $aircraft, $local_departure_time, $flight_mode, $latest_departure_time, $minutes_before, $hours_after, $buffer_time_knots, $buffer_time_mach, $is_next_leg, $next_leg_departure_time, $lang, $aircraft_list, $windClimo = null, $short_haul, $medium_haul, $long_haul, $ultra_long_haul, $cruise_range_corr = null) {
@@ -421,11 +402,6 @@ function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_n
         if ($auto_tz === '' && $city_str !== '') {
             $url = 'https://time.is/' . rawurlencode($city_str);
 
-            fsa_tz_debug('timeis.fetch.start', [
-                'city' => $city_str,
-                'url' => $url
-            ]);
-
             $html = null;
 
             if (function_exists('curl_init')) {
@@ -451,31 +427,15 @@ function handleTimezoneAndTimes($dep_lat, $dep_lon, $local_departure_time, $is_n
                 $html = @file_get_contents($url, false, $ctx);
             }
 
-            fsa_tz_debug('timeis.fetch.result', [
-                'city' => $city_str,
-                'html_is_string' => is_string($html),
-                'html_len' => is_string($html) ? strlen($html) : 0
-            ]);
-
             if (is_string($html) && $html !== '') {
 
                 // Extract timezone using language-independent key: zone_id='Europe/Kyiv'
                 $m = [];
                 $matched = preg_match("/zone_id=['\"]([A-Za-z0-9_+\/-]+)['\"]/", $html, $m);
 
-                fsa_tz_debug('timeis.extract.zone_id.match', [
-                    'city' => $city_str,
-                    'matched' => (bool)$matched
-                ]);
-
                 if ($matched) {
 
                     $candidate = trim((string)$m[1]);
-
-                    fsa_tz_debug('timeis.extract.zone_id.candidate', [
-                        'city' => $city_str,
-                        'candidate' => $candidate
-                    ]);
 
                     // Alias mapping for older tzdata/PHP installs
                     $aliases = [

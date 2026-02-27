@@ -43,6 +43,18 @@ function getTimezoneFromCoordinates($lat, $lon) {
 
             // Only return if we have a valid timezone name
             if ($timezone !== null && $timezone !== '') {
+
+                // Normalize deprecated/alias timezone IDs to a preferred canonical ID
+                $timezone = trim((string)$timezone);
+                $aliases = [
+                    // Greenland: tzdata renamed America/Godthab -> America/Nuuk
+                    'America/Godthab' => 'America/Nuuk',
+                ];
+
+                if (isset($aliases[$timezone])) {
+                    $timezone = $aliases[$timezone];
+                }
+
                 return [
                     'timezone' => $timezone
                 ];
