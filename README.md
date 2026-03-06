@@ -13,7 +13,7 @@ For details, please check the following sections in the Wiki:
 
 This script is meant to **facilitate the creation of flight plans in [FSAirlines Virtual Airlines Management System](https://www.fsairlines.net/)** by automatically providing **"reasonable" random departure times within a range of local times** selected by the user. The duration of the flight is then calculated and, finally, **departure and arrival times are provided in UTC**, as required by FSA.
 
-There are **two modes** of scheduling available: **charter**, for single, individual, isolated flights, and **daily schedule**, where an airplane is meant to start early in the day and concatenate a series of flights until its end of that day while respecting a minimal turnover time for refuelling, disembarking and boarding. 
+There are **two modes** of scheduling available: **charter**, for single, individual, isolated flights, and **daily schedule**, where an airplane is meant to start early in the day and concatenate a series of flights until the end of that day while respecting a minimal turnover time for refuelling, disembarking and boarding. 
 
 Because **FSA Flight Scheduler is designed to generate all-year-round valid schedules**, it does not make use of real-time weather for planning. It does use, nevertheless, a **simplified version of the [NCEP/NCAR Reanalysis 1 database](https://cliks.apcc21.org/dataset/ncep) with average winds from 1958 to 2008**. This database is used from FL 240 up to FL 450 and, with all its limitations, mitigates up to a reasonable point the enormous influence that jet streams have in the timing of routes (particularly long ones) affected by these streams.
 
